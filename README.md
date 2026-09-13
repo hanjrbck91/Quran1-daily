@@ -2,7 +2,7 @@
 
 > One Page of Quran. Every Day.
 
-One-hour personal MVP. No login, no ads, no payments, no tracking. Static frontend + Google Sheets backend via Apps Script.
+Personal MVP. No login, no ads, no payments, no tracking. Static frontend + Google Sheets backend via Apps Script. **Google Sheets is the source of truth for reading history/progress** — the app is built to be used from a phone, so nothing important lives in laptop localStorage.
 
 ## Run locally
 
@@ -12,7 +12,7 @@ Any static file server works (fetch calls require http(s), not file://):
 npx serve .
 ```
 
-Open the printed URL (e.g. http://localhost:3000) on desktop, or on your phone if it's on the same Wi-Fi (use your computer's LAN IP instead of localhost).
+Open the printed URL on desktop, or on your phone if it's on the same Wi-Fi (use your computer's LAN IP instead of localhost).
 
 ## Deploy the Google Sheets backend
 
@@ -30,29 +30,47 @@ Do this under the `hadhilnjrbrototype@gmail.com` Google account:
 7. Open `app.js` in this project and paste that URL into `SHEET_ENDPOINT` at the top of the file.
 8. Reload the app. The sheet auto-creates a "Readings" tab with headers on the first submission.
 
-Because Apps Script web apps don't return CORS headers by default, the frontend posts with `mode: "no-cors"` (fire-and-forget). To verify logging worked, just check the Sheet directly after completing a page — a new row should appear within a couple of seconds.
+### Backend contract (one `/exec` URL, two capabilities)
+
+- **`POST` a completed reading** — body: `{timestamp,date,deviceId,page,durationSeconds,source,imageFilename}` → appends a row, responds `{ok:true}`. The frontend `await`s this and only marks the page complete once `ok:true` comes back; on failure it shows "Retry Save".
+- **`GET ?deviceId=XYZ`** — returns `{ok:true, entries:[...]}` containing *only that device's* rows (server-side filtered, so no device can see another device's reading history). This is what the frontend uses to compute completed pages, weekly/monthly/lifetime stats, and days-returned — every time the app loads and every time Progress is opened.
+
+Both requests use plain `fetch` with `Content-Type: text/plain` on POST (no custom headers) — this keeps them as CORS "simple requests" so the browser doesn't need a preflight, and Apps Script's response can actually be read back cross-origin. No `mode: "no-cors"` fire-and-forget anymore, since we now need to confirm the save and read history back.
 
 ## Deploy the frontend (so you can open it on your phone)
 
-Simplest path: GitHub Pages.
+Already pushed to GitHub. Turn on Pages:
 
-1. Create a new GitHub repo (e.g. `quran1-daily`) under your account.
-2. Push this folder's contents to it.
-3. In the repo Settings → Pages, set source to the `main` branch, root folder.
-4. Your app will be live at `https://<username>.github.io/quran1-daily/`.
-5. Open that URL on your phone → Add to Home Screen.
+1. Repo Settings → Pages → Source: `main` branch, root folder.
+2. App goes live at `https://hanjrbck91.github.io/Quran1-daily/`.
+3. Open that URL on your phone → Add to Home Screen.
 
 Any other static host (Netlify, Vercel, Cloudflare Pages) works the same way — just point it at this folder.
 
 ## What's stored where
 
-- **Google Sheet** (durable log): timestamp, date, anonymous deviceId, page number, duration in seconds, source (digital/physical), optional image filename.
-- **Browser localStorage** (drives the UI): device id, list of completed pages (for random-page-avoidance), full reading history (drives the Progress screen), current page number. This is the source of truth for what you see in the app — the Sheet is a durable backup/log.
-- **Captured physical-Quran photos**: stay in the browser only for the current session preview. They are never uploaded anywhere. Only the filename is logged.
+- **Google Sheet (source of truth)**: timestamp, date, anonymous deviceId, page number, duration in seconds, source (digital/physical), optional image filename. Completed pages, weekly/monthly/lifetime stats, and days-returned are all computed from this on every load — not from any local cache.
+- **Browser localStorage (device only, harmless)**: just the anonymous device id, so the phone recognizes itself across visits/reloads. No reading history, no progress, no completed-pages list is kept locally anymore.
+- **Captured physical-Quran photos**: stay in the browser only, for the current session's preview. Never uploaded anywhere — only the filename is logged to the Sheet.
 
-## Known limitations (intentional, for a 1-hour MVP)
+## Anonymous device ID
 
-- Progress stats are computed from localStorage, not the Sheet — clearing browser data resets your visible progress (the Sheet log itself is untouched).
-- No login means progress doesn't sync across devices/browsers.
-- No CORS read-back from Apps Script, so the app can't display "confirmed logged" status — check the Sheet directly the first time to confirm it's wired up.
+Generated once per browser on first visit (`dev_<timestamp>_<random>`), stored in localStorage, sent with every reading. No name, email, or Google account info is ever collected. A different phone/browser gets a different ID and only ever sees its own rows (the backend filters by `deviceId` server-side before responding).
+
+## Verified test flow
+
+1. Fresh browser/device → new anonymous ID generated.
+2. Random page fetched, history fetched from backend (empty for a new ID).
+3. Start Reading → timer runs on timestamps.
+4. Page Complete → POSTs to Apps Script, waits for `{ok:true}` before showing "complete" feedback.
+5. Reload → same device ID persists, backend GET returns the saved row, that page is excluded from the next random pick, Progress shows 1 page / correct minutes / 1 day returned.
+6. Clearing localStorage (≈ opening on a different device) generates a new ID with zero history — completely isolated from the first device's rows.
+
+This was tested end-to-end against a local mock of the Apps Script contract (same request/response shape) since deploying to the real `hadhilnjrbrototype@gmail.com` Apps Script requires interactive Google login. Once you paste in the real `/exec` URL, the same flow runs against the actual Sheet.
+
+## Known limitations (intentional, for an MVP)
+
+- No login means there's no way to recover your device ID if you clear site data or switch phones — it's a new, empty history at that point.
+- Progress/history requests re-fetch the whole per-device row set from the Sheet each time (fine at personal-MVP scale of a few hundred rows; would need pagination or Apps Script caching if this ever needed to scale to many users or years of daily rows).
 - Arabic text quality/font depends on the visiting device having a decent Arabic-capable serif font installed; no custom font is bundled to keep this a zero-build static app.
+- Apps Script cold starts can take a second or two on the first request after idling — the UI shows "Loading your progress…" / "Saving…" during this.

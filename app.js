@@ -4,55 +4,79 @@
 const SHEET_ENDPOINT = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 const TOTAL_PAGES = 604;
-const LS_KEYS = {
-  deviceId: "qd_device_id",
-  completed: "qd_completed_pages",   // array of page numbers fully completed at least once
-  history: "qd_history",             // array of {ts, date, page, seconds, source}
-  currentPage: "qd_current_page"
-};
+const LS_DEVICE_KEY = "qd_device_id"; // only harmless device identifier lives locally
 
-// ==== DEVICE ID ====
+// ==== DEVICE ID (local, anonymous only) ====
 function getDeviceId(){
-  let id = localStorage.getItem(LS_KEYS.deviceId);
+  let id = localStorage.getItem(LS_DEVICE_KEY);
   if(!id){
     id = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
-    localStorage.setItem(LS_KEYS.deviceId, id);
+    localStorage.setItem(LS_DEVICE_KEY, id);
   }
   return id;
 }
 
-// ==== LOCAL DATA HELPERS ====
-function getCompleted(){
-  try{ return JSON.parse(localStorage.getItem(LS_KEYS.completed)) || []; }catch(e){ return []; }
-}
-function saveCompleted(arr){
-  localStorage.setItem(LS_KEYS.completed, JSON.stringify(arr));
-}
-function getHistory(){
-  try{ return JSON.parse(localStorage.getItem(LS_KEYS.history)) || []; }catch(e){ return []; }
-}
-function saveHistory(arr){
-  localStorage.setItem(LS_KEYS.history, JSON.stringify(arr));
+// ==== BACKEND: SAVE A READING ====
+async function saveToSheet(entry){
+  if(!SHEET_ENDPOINT || SHEET_ENDPOINT.indexOf("PASTE_") === 0){
+    return { ok: false, error: "not_configured" };
+  }
+  try{
+    const res = await fetch(SHEET_ENDPOINT, {
+      method: "POST",
+      // text/plain avoids a CORS preflight; Apps Script web apps allow
+      // the response to be read back for this "simple request" shape.
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(entry)
+    });
+    const json = await res.json();
+    return json;
+  }catch(e){
+    console.warn("Sheet save failed", e);
+    return { ok: false, error: String(e) };
+  }
 }
 
-// ==== RANDOM PAGE SELECTION ====
-function pickRandomPage(){
-  const completed = getCompleted();
+// ==== BACKEND: FETCH THIS DEVICE'S HISTORY ====
+async function fetchHistoryFromBackend(deviceId){
+  if(!SHEET_ENDPOINT || SHEET_ENDPOINT.indexOf("PASTE_") === 0){
+    return { ok: false, entries: [] };
+  }
+  try{
+    const url = SHEET_ENDPOINT + "?deviceId=" + encodeURIComponent(deviceId);
+    const res = await fetch(url);
+    const json = await res.json();
+    if(json && json.ok && Array.isArray(json.entries)){
+      return { ok: true, entries: json.entries };
+    }
+    return { ok: false, entries: [] };
+  }catch(e){
+    console.warn("History fetch failed (offline?)", e);
+    return { ok: false, entries: [] };
+  }
+}
+
+// ==== DERIVED DATA FROM BACKEND ENTRIES ====
+function getCompletedPages(entries){
+  return [...new Set(entries.map(e => Number(e.page)).filter(n => !isNaN(n)))];
+}
+
+function dayKey(timestamp){
+  const d = new Date(timestamp);
+  return d.toISOString().slice(0, 10);
+}
+
+// ==== RANDOM PAGE SELECTION (excludes pages this device already completed) ====
+function pickRandomPage(completedPages){
   let pool = [];
   for(let p = 1; p <= TOTAL_PAGES; p++){
-    if(!completed.includes(p)) pool.push(p);
+    if(!completedPages.includes(p)) pool.push(p);
   }
   if(pool.length === 0){
-    // all pages completed at least once -> reset pool, allow full random again
+    // all 604 pages completed at least once -> allow full random again
     pool = Array.from({length: TOTAL_PAGES}, (_, i) => i + 1);
   }
-  const last = Number(localStorage.getItem(LS_KEYS.currentPage) || 0);
-  if(pool.length > 1){
-    pool = pool.filter(p => p !== last);
-  }
-  const page = pool[Math.floor(Math.random() * pool.length)];
-  localStorage.setItem(LS_KEYS.currentPage, String(page));
-  return page;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 // ==== QURAN FETCH (Al Quran Cloud API, Uthmani edition) ====
@@ -90,6 +114,8 @@ function startTimer(){
   readingStartTs = Date.now();
   document.getElementById("startBtn").hidden = true;
   document.getElementById("completeBtn").hidden = false;
+  document.getElementById("completeBtn").disabled = false;
+  document.getElementById("completeBtn").textContent = "Page Complete";
   timerInterval = setInterval(() => {
     document.getElementById("timerDisplay").textContent = formatElapsed(Date.now() - readingStartTs);
   }, 250);
@@ -102,7 +128,7 @@ function stopTimer(){
   return elapsedMs;
 }
 
-// ==== SUBMIT COMPLETION ====
+// ==== SUBMIT COMPLETION (backend-confirmed) ====
 function humanDuration(seconds){
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -110,66 +136,66 @@ function humanDuration(seconds){
   return `${m} min ${s} sec`;
 }
 
-async function logToSheet(entry){
-  if(!SHEET_ENDPOINT || SHEET_ENDPOINT.indexOf("PASTE_") === 0){
-    console.warn("Sheet endpoint not configured yet; skipping remote log.");
-    return;
-  }
-  try{
-    await fetch(SHEET_ENDPOINT, {
-      method: "POST",
-      mode: "no-cors", // Apps Script web apps don't return CORS headers by default; fire-and-forget
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(entry)
-    });
-  }catch(e){
-    console.warn("Sheet log failed (offline?)", e);
-  }
-}
-
 let currentSource = "digital";
+let pendingEntry = null; // set only if a save attempt failed, so the user can retry
 
 async function handleComplete(){
-  const elapsedMs = stopTimer();
-  const seconds = Math.max(1, Math.round(elapsedMs / 1000));
-  const pageNumber = Number(localStorage.getItem(LS_KEYS.currentPage));
-  const now = new Date();
+  const completeBtn = document.getElementById("completeBtn");
+  const feedback = document.getElementById("feedback");
 
-  const entry = {
-    timestamp: now.toISOString(),
-    date: now.toISOString().slice(0, 10),
-    deviceId: getDeviceId(),
-    page: pageNumber,
-    durationSeconds: seconds,
-    source: currentSource,
-    imageFilename: currentImageFilename || ""
-  };
-
-  const history = getHistory();
-  history.push(entry);
-  saveHistory(history);
-
-  const completed = getCompleted();
-  if(!completed.includes(pageNumber)){
-    completed.push(pageNumber);
-    saveCompleted(completed);
+  let entry = pendingEntry;
+  if(!entry){
+    const elapsedMs = stopTimer();
+    const seconds = Math.max(1, Math.round(elapsedMs / 1000));
+    const now = new Date();
+    entry = {
+      timestamp: now.toISOString(),
+      date: now.toISOString().slice(0, 10),
+      deviceId: getDeviceId(),
+      page: currentPageNumber,
+      durationSeconds: seconds,
+      source: currentSource,
+      imageFilename: currentImageFilename || ""
+    };
   }
 
-  logToSheet(entry);
+  completeBtn.disabled = true;
+  completeBtn.textContent = "Saving…";
+  feedback.hidden = true;
 
-  const feedback = document.getElementById("feedback");
+  const result = await saveToSheet(entry);
+
+  if(!result.ok){
+    pendingEntry = entry;
+    completeBtn.disabled = false;
+    completeBtn.textContent = "Retry Save";
+    feedback.hidden = false;
+    feedback.textContent = result.error === "not_configured"
+      ? "Backend not configured yet — set SHEET_ENDPOINT in app.js. Your reading was NOT saved."
+      : "Could not save to Google Sheets. Check your connection and tap Retry Save.";
+    return;
+  }
+
+  pendingEntry = null;
+
   feedback.hidden = false;
-  feedback.textContent = `Page ${pageNumber} complete — ${humanDuration(seconds)}. May Allah accept it.`;
+  feedback.textContent = `Page ${entry.page} complete — ${humanDuration(entry.durationSeconds)}. May Allah accept it.`;
 
-  document.getElementById("completeBtn").hidden = true;
+  completeBtn.hidden = true;
+  completeBtn.disabled = false;
   document.getElementById("startBtn").hidden = false;
   document.getElementById("startBtn").textContent = "Start Next Time";
   document.getElementById("timerDisplay").textContent = "00:00";
 
   resetPhysicalCapture();
+
+  // Refresh cached history so Progress reflects this reading immediately.
+  const deviceId = getDeviceId();
+  const { entries } = await fetchHistoryFromBackend(deviceId);
+  cachedEntries = entries;
 }
 
-// ==== PHYSICAL CAPTURE ====
+// ==== PHYSICAL CAPTURE (image stays local, never sent to the Sheet) ====
 let currentImageFilename = "";
 
 function resetPhysicalCapture(){
@@ -195,7 +221,9 @@ document.getElementById("physicalInput").addEventListener("change", (e) => {
 
 document.getElementById("clearPhysical").addEventListener("click", resetPhysicalCapture);
 
-// ==== PROGRESS ====
+// ==== PROGRESS (computed from backend entries, never localStorage) ====
+let cachedEntries = [];
+
 function startOfWeek(d){
   const date = new Date(d);
   const day = date.getDay(); // 0=Sun
@@ -210,8 +238,7 @@ function startOfMonth(d){
   return date;
 }
 
-function computeProgress(){
-  const history = getHistory();
+function computeProgress(entries){
   const now = new Date();
   const weekStart = startOfWeek(now);
   const monthStart = startOfMonth(now);
@@ -219,11 +246,12 @@ function computeProgress(){
   let weekPages = 0, weekSeconds = 0, monthPages = 0, monthSeconds = 0;
   const daySet = new Set();
 
-  history.forEach(h => {
+  entries.forEach(h => {
     const t = new Date(h.timestamp);
-    daySet.add(h.date);
-    if(t >= weekStart){ weekPages++; weekSeconds += h.durationSeconds; }
-    if(t >= monthStart){ monthPages++; monthSeconds += h.durationSeconds; }
+    const seconds = Number(h.durationSeconds) || 0;
+    daySet.add(dayKey(h.timestamp));
+    if(t >= weekStart){ weekPages++; weekSeconds += seconds; }
+    if(t >= monthStart){ monthPages++; monthSeconds += seconds; }
   });
 
   return {
@@ -231,14 +259,14 @@ function computeProgress(){
     weekMinutes: Math.round(weekSeconds / 60),
     monthPages,
     monthMinutes: Math.round(monthSeconds / 60),
-    totalPages: history.length,
+    totalPages: entries.length,
     daysReturned: daySet.size,
     daySet
   };
 }
 
-function renderProgress(){
-  const p = computeProgress();
+function renderProgress(entries){
+  const p = computeProgress(entries);
   document.getElementById("statWeekPages").textContent = p.weekPages;
   document.getElementById("statWeekMinutes").textContent = p.weekMinutes;
   document.getElementById("statMonthPages").textContent = p.monthPages;
@@ -282,9 +310,17 @@ Important: please clearly distinguish between the literal Quranic text/translati
 let currentPageData = null;
 let currentPageNumber = null;
 
-async function loadTodayPage(){
-  const pageNumber = pickRandomPage();
+async function initApp(){
+  const deviceId = getDeviceId();
+
+  document.getElementById("pageMeta").textContent = "Loading your progress…";
+  const { entries } = await fetchHistoryFromBackend(deviceId);
+  cachedEntries = entries;
+
+  const completedPages = getCompletedPages(entries);
+  const pageNumber = pickRandomPage(completedPages);
   currentPageNumber = pageNumber;
+
   document.getElementById("pageMeta").textContent = "Loading page " + pageNumber + "…";
   try{
     const data = await fetchPage(pageNumber);
@@ -299,14 +335,19 @@ async function loadTodayPage(){
 document.getElementById("startBtn").addEventListener("click", () => {
   document.getElementById("feedback").hidden = true;
   document.getElementById("startBtn").textContent = "Start Reading";
+  pendingEntry = null;
   startTimer();
 });
 
 document.getElementById("completeBtn").addEventListener("click", handleComplete);
 
-document.getElementById("progressBtn").addEventListener("click", () => {
-  renderProgress();
+document.getElementById("progressBtn").addEventListener("click", async () => {
   document.getElementById("progressOverlay").hidden = false;
+  renderProgress(cachedEntries); // show cached instantly
+  const deviceId = getDeviceId();
+  const { entries } = await fetchHistoryFromBackend(deviceId);
+  cachedEntries = entries;
+  renderProgress(entries); // then refresh with latest from the Sheet
 });
 document.getElementById("closeProgress").addEventListener("click", () => {
   document.getElementById("progressOverlay").hidden = true;
@@ -341,4 +382,4 @@ if("serviceWorker" in navigator){
   });
 }
 
-loadTodayPage();
+initApp();
