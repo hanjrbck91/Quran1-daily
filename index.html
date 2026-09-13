@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4ecd8">
+<title>Quran 1/Daily</title>
+<meta name="description" content="One Page of Quran. Every Day.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Quran 1/Daily">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-title">Quran 1/Daily</span>
+    <span class="brand-tag">One Page of Quran. Every Day.</span>
+  </div>
+  <button id="progressBtn" class="icon-btn" title="Progress" aria-label="Progress">📖</button>
+</header>
+
+<main id="mainScreen" class="screen">
+
+  <section id="pageCard" class="page-card">
+    <div id="pageMeta" class="page-meta">Loading today's page…</div>
+    <div id="quranText" class="quran-text" dir="rtl" lang="ar"></div>
+  </section>
+
+  <section class="timer-block">
+    <div id="timerDisplay" class="timer-display">00:00</div>
+    <div class="timer-actions">
+      <button id="startBtn" class="btn btn-primary">Start Reading</button>
+      <button id="completeBtn" class="btn btn-complete" hidden>Page Complete</button>
+    </div>
+  </section>
+
+  <section class="secondary-actions">
+    <label class="btn btn-ghost" for="physicalInput">📷 Capture / Upload Page</label>
+    <input type="file" id="physicalInput" accept="image/*" capture="environment" hidden>
+    <button id="aiPromptBtn" class="btn btn-ghost">Understand This Page</button>
+  </section>
+
+  <div id="physicalPreviewWrap" class="physical-preview-wrap" hidden>
+    <img id="physicalPreview" class="physical-preview" alt="Captured Quran page">
+    <button id="clearPhysical" class="btn-link">Remove</button>
+  </div>
+
+  <div id="feedback" class="feedback" hidden></div>
+
+</main>
+
+<div id="progressOverlay" class="overlay" hidden>
+  <div class="sheet">
+    <div class="sheet-header">
+      <h2>Your Journey</h2>
+      <button id="closeProgress" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><span id="statWeekPages" class="stat-num">0</span><span class="stat-label">pages this week</span></div>
+      <div class="stat"><span id="statWeekMinutes" class="stat-num">0</span><span class="stat-label">minutes this week</span></div>
+      <div class="stat"><span id="statMonthPages" class="stat-num">0</span><span class="stat-label">pages this month</span></div>
+      <div class="stat"><span id="statMonthMinutes" class="stat-num">0</span><span class="stat-label">minutes this month</span></div>
+      <div class="stat"><span id="statTotalPages" class="stat-num">0</span><span class="stat-label">total pages</span></div>
+      <div class="stat"><span id="statDaysReturned" class="stat-num">0</span><span class="stat-label">days returned</span></div>
+    </div>
+    <p class="philosophy-note">Missing a day is not failure. Returning is the habit.</p>
+    <div id="historyCalendar" class="history-calendar"></div>
+  </div>
+</div>
+
+<div id="aiPromptOverlay" class="overlay" hidden>
+  <div class="sheet">
+    <div class="sheet-header">
+      <h2>Understand This Page</h2>
+      <button id="closeAiPrompt" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <p class="hint">Copy this prompt, then paste it into ChatGPT along with a photo or screenshot of the page.</p>
+    <textarea id="aiPromptText" class="ai-prompt-text" readonly></textarea>
+    <button id="copyPromptBtn" class="btn btn-primary">Copy Prompt</button>
+    <span id="copyConfirm" class="copy-confirm" hidden>Copied ✓</span>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

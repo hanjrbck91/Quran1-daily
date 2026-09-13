@@ -1,0 +1,250 @@
+:root{
+  --paper:#f4ecd8;
+  --paper-dark:#ece1c8;
+  --ink:#2e2620;
+  --ink-soft:#6b5f4f;
+  --accent:#8a6d3b;
+  --accent-deep:#5f4a26;
+  --line:#d8c9a3;
+  --shadow:rgba(60,45,20,0.12);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Georgia","Times New Roman",serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:18px 20px 10px;
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;flex-direction:column;}
+.brand-title{font-size:1.15rem;font-weight:700;letter-spacing:0.02em;color:var(--accent-deep);}
+.brand-tag{font-size:0.72rem;color:var(--ink-soft);font-style:italic;}
+.icon-btn{
+  background:none;border:none;font-size:1.3rem;cursor:pointer;
+  padding:6px;border-radius:8px;color:var(--accent-deep);
+}
+.icon-btn:active{background:var(--paper-dark);}
+
+.screen{
+  max-width:640px;
+  margin:0 auto;
+  padding:16px 16px 40px;
+}
+
+.page-card{
+  background:#fffdf6;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:20px 18px;
+  box-shadow:0 2px 10px var(--shadow);
+  margin-bottom:22px;
+  min-height:200px;
+}
+.page-meta{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  text-align:center;
+  margin-bottom:14px;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+}
+.quran-text{
+  font-family:"Traditional Arabic","Scheherazade New","Amiri","Noto Naskh Arabic",serif;
+  font-size:1.65rem;
+  line-height:2.5;
+  text-align:center;
+  color:var(--ink);
+}
+.quran-text .ayah-num{
+  display:inline-block;
+  font-size:0.9rem;
+  color:var(--accent);
+  margin:0 4px;
+}
+
+.timer-block{
+  text-align:center;
+  margin-bottom:22px;
+}
+.timer-display{
+  font-size:2.8rem;
+  font-weight:700;
+  color:var(--accent-deep);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:0.04em;
+  margin-bottom:14px;
+}
+.timer-actions{display:flex;justify-content:center;gap:10px;}
+
+.btn{
+  font-family:inherit;
+  font-size:0.95rem;
+  padding:12px 22px;
+  border-radius:999px;
+  border:1px solid var(--accent-deep);
+  cursor:pointer;
+  background:transparent;
+  color:var(--accent-deep);
+}
+.btn-primary{
+  background:var(--accent-deep);
+  color:#fdf8ec;
+}
+.btn-complete{
+  background:#4b6b46;
+  border-color:#4b6b46;
+  color:#fdf8ec;
+}
+.btn-ghost{
+  border:1px solid var(--line);
+  color:var(--ink-soft);
+  font-size:0.85rem;
+  padding:9px 16px;
+  display:inline-block;
+}
+
+.secondary-actions{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+
+.physical-preview-wrap{
+  text-align:center;
+  margin-bottom:16px;
+}
+.physical-preview{
+  max-width:100%;
+  max-height:260px;
+  border-radius:10px;
+  border:1px solid var(--line);
+}
+.btn-link{
+  display:block;
+  margin:8px auto 0;
+  background:none;
+  border:none;
+  color:var(--ink-soft);
+  text-decoration:underline;
+  cursor:pointer;
+  font-family:inherit;
+}
+
+.feedback{
+  text-align:center;
+  background:#eef3ea;
+  border:1px solid #cddcc4;
+  border-radius:10px;
+  padding:14px;
+  color:#3f5a3a;
+  font-size:0.95rem;
+}
+
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(30,24,14,0.45);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  z-index:50;
+}
+.sheet{
+  background:var(--paper);
+  width:100%;
+  max-width:640px;
+  border-radius:18px 18px 0 0;
+  padding:20px 20px 30px;
+  max-height:85vh;
+  overflow-y:auto;
+}
+.sheet-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+.sheet-header h2{
+  font-size:1.1rem;
+  margin:0;
+  color:var(--accent-deep);
+}
+
+.stats-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-bottom:16px;
+}
+.stat{
+  background:#fffdf6;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px 10px;
+  text-align:center;
+}
+.stat-num{
+  display:block;
+  font-size:1.6rem;
+  font-weight:700;
+  color:var(--accent-deep);
+}
+.stat-label{
+  font-size:0.7rem;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  letter-spacing:0.03em;
+}
+.philosophy-note{
+  text-align:center;
+  font-style:italic;
+  color:var(--ink-soft);
+  font-size:0.85rem;
+  margin-bottom:16px;
+}
+.history-calendar{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:4px;
+}
+.history-day{
+  aspect-ratio:1;
+  border-radius:4px;
+  background:var(--line);
+}
+.history-day.active{
+  background:var(--accent);
+}
+
+.hint{
+  font-size:0.85rem;
+  color:var(--ink-soft);
+  margin-bottom:10px;
+}
+.ai-prompt-text{
+  width:100%;
+  min-height:220px;
+  font-family:monospace;
+  font-size:0.8rem;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fffdf6;
+  color:var(--ink);
+  margin-bottom:10px;
+}
+.copy-confirm{
+  margin-left:10px;
+  color:#3f5a3a;
+  font-size:0.85rem;
+}
