@@ -1,7 +1,7 @@
 // ==== CONFIG ====
 // Paste your deployed Google Apps Script Web App URL here after deployment.
 // See apps-script/Code.gs and README.md for deployment steps.
-const SHEET_ENDPOINT = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwoWvbD00mxX8Z1110Fnw7Rp6IxKxMQ9Ww9ZMShXGPqVRHEC_XsWxjPTiMCYd_rPwTjYA/exec";
 
 const TOTAL_PAGES = 604;
 const LS_DEVICE_KEY = "qd_device_id"; // only harmless device identifier lives locally
