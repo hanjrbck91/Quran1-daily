@@ -3,56 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f4ecd8">
-<title>Quran 1/Daily</title>
+<meta name="theme-color" content="#efe7d6">
+<title>Remember Point</title>
 <meta name="description" content="One Page of Quran. Every Day.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Quran 1/Daily">
+<meta name="apple-mobile-web-app-title" content="Remember Point">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-title">Quran 1/Daily</span>
-    <span class="brand-tag">One Page of Quran. Every Day.</span>
-  </div>
-  <button id="progressBtn" class="icon-btn" title="Progress" aria-label="Progress">📖</button>
-</header>
+<div class="app">
 
-<main id="mainScreen" class="screen">
+  <!-- LANDING -->
+  <section id="screenLanding" class="screen landing">
+    <button id="journeyBtn" class="corner-btn" aria-label="Your Journey">◆</button>
 
-  <section id="pageCard" class="page-card">
-    <div id="pageMeta" class="page-meta">Loading today's page…</div>
-    <div id="quranText" class="quran-text" dir="rtl" lang="ar"></div>
-  </section>
+    <div class="landing-center">
+      <p class="mark">﷽</p>
+      <h1 class="app-name">Remember Point</h1>
+      <p class="app-tagline">One Page of Quran.<br>Every Day.</p>
 
-  <section class="timer-block">
-    <div id="timerDisplay" class="timer-display">00:00</div>
-    <div class="timer-actions">
-      <button id="startBtn" class="btn btn-primary">Start Reading</button>
-      <button id="completeBtn" class="btn btn-complete" hidden>Page Complete</button>
+      <button id="beginBtn" class="btn btn-primary btn-hero">Begin Today&rsquo;s Page</button>
+
+      <p id="landingError" class="landing-error" hidden>Could not load today's page. Check your connection and try again.</p>
+      <p id="returningLine" class="returning-line" hidden></p>
     </div>
   </section>
 
-  <section class="secondary-actions">
-    <label class="btn btn-ghost" for="physicalInput">📷 Capture / Upload Page</label>
-    <input type="file" id="physicalInput" accept="image/*" capture="environment" hidden>
-    <button id="aiPromptBtn" class="btn btn-ghost">Understand This Page</button>
+  <!-- READING -->
+  <section id="screenReading" class="screen reading" hidden>
+    <button id="backBtn" class="corner-btn" aria-label="Back">←</button>
+
+    <div class="reading-body">
+      <p id="pageMeta" class="page-meta">Page —</p>
+
+      <div id="quranText" class="quran-text" dir="rtl" lang="ar"></div>
+
+      <div class="timer-wrap">
+        <span id="timerDisplay" class="timer-display">00:00</span>
+      </div>
+
+      <button id="startBtn" class="btn btn-primary btn-hero">Start Reading</button>
+      <button id="completeBtn" class="btn btn-complete btn-hero" hidden>Page Complete</button>
+
+      <p id="readingError" class="reading-error" hidden></p>
+
+      <div class="reading-secondary">
+        <label class="text-link" for="physicalInput">📷 Capture / Upload Page</label>
+        <input type="file" id="physicalInput" accept="image/*" capture="environment" hidden>
+        <button id="aiPromptBtn" class="text-link">Understand This Page</button>
+      </div>
+
+      <div id="physicalPreviewWrap" class="physical-preview-wrap" hidden>
+        <img id="physicalPreview" class="physical-preview" alt="Captured Quran page">
+        <button id="clearPhysical" class="btn-link">Remove</button>
+      </div>
+    </div>
   </section>
 
-  <div id="physicalPreviewWrap" class="physical-preview-wrap" hidden>
-    <img id="physicalPreview" class="physical-preview" alt="Captured Quran page">
-    <button id="clearPhysical" class="btn-link">Remove</button>
-  </div>
+  <!-- COMPLETION -->
+  <section id="screenCompletion" class="screen completion" hidden>
+    <div class="completion-center">
+      <p class="completion-lead">You gave</p>
+      <p id="completionDuration" class="completion-duration">0 sec</p>
+      <p class="completion-lead">to the Qur&rsquo;an today.</p>
+      <p class="completion-note">May Allah accept it.</p>
+      <button id="doneBtn" class="btn btn-primary btn-hero">Done</button>
+    </div>
+  </section>
 
-  <div id="feedback" class="feedback" hidden></div>
+</div>
 
-</main>
-
+<!-- JOURNEY (progress) SHEET -->
 <div id="progressOverlay" class="overlay" hidden>
   <div class="sheet">
     <div class="sheet-header">
@@ -72,8 +97,9 @@
   </div>
 </div>
 
+<!-- AI PROMPT SHEET -->
 <div id="aiPromptOverlay" class="overlay" hidden>
-  <div class="sheet">
+  <div class="sheet sheet-narrow">
     <div class="sheet-header">
       <h2>Understand This Page</h2>
       <button id="closeAiPrompt" class="icon-btn" aria-label="Close">✕</button>

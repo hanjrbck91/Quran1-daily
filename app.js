@@ -1,6 +1,4 @@
 // ==== CONFIG ====
-// Paste your deployed Google Apps Script Web App URL here after deployment.
-// See apps-script/Code.gs and README.md for deployment steps.
 const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwoWvbD00mxX8Z1110Fnw7Rp6IxKxMQ9Ww9ZMShXGPqVRHEC_XsWxjPTiMCYd_rPwTjYA/exec";
 
 const TOTAL_PAGES = 604;
@@ -99,6 +97,13 @@ function renderPage(pageData, pageNumber){
   }).join(" ");
 }
 
+// ==== SCREEN SWITCHING ====
+function showScreen(id){
+  ["screenLanding", "screenReading", "screenCompletion"].forEach(s => {
+    document.getElementById(s).hidden = (s !== id);
+  });
+}
+
 // ==== TIMER (timestamp based) ====
 let readingStartTs = null;
 let timerInterval = null;
@@ -128,6 +133,17 @@ function stopTimer(){
   return elapsedMs;
 }
 
+function resetReadingUI(){
+  document.getElementById("timerDisplay").textContent = "00:00";
+  document.getElementById("startBtn").hidden = false;
+  document.getElementById("startBtn").textContent = "Start Reading";
+  document.getElementById("completeBtn").hidden = true;
+  document.getElementById("completeBtn").disabled = false;
+  document.getElementById("completeBtn").textContent = "Page Complete";
+  document.getElementById("readingError").hidden = true;
+  resetPhysicalCapture();
+}
+
 // ==== SUBMIT COMPLETION (backend-confirmed) ====
 function humanDuration(seconds){
   const m = Math.floor(seconds / 60);
@@ -141,7 +157,7 @@ let pendingEntry = null; // set only if a save attempt failed, so the user can r
 
 async function handleComplete(){
   const completeBtn = document.getElementById("completeBtn");
-  const feedback = document.getElementById("feedback");
+  const errorEl = document.getElementById("readingError");
 
   let entry = pendingEntry;
   if(!entry){
@@ -161,7 +177,7 @@ async function handleComplete(){
 
   completeBtn.disabled = true;
   completeBtn.textContent = "Saving…";
-  feedback.hidden = true;
+  errorEl.hidden = true;
 
   const result = await saveToSheet(entry);
 
@@ -169,30 +185,22 @@ async function handleComplete(){
     pendingEntry = entry;
     completeBtn.disabled = false;
     completeBtn.textContent = "Retry Save";
-    feedback.hidden = false;
-    feedback.textContent = result.error === "not_configured"
-      ? "Backend not configured yet — set SHEET_ENDPOINT in app.js. Your reading was NOT saved."
+    errorEl.hidden = false;
+    errorEl.textContent = result.error === "not_configured"
+      ? "Backend not configured yet — your reading was not saved."
       : "Could not save to Google Sheets. Check your connection and tap Retry Save.";
     return;
   }
 
   pendingEntry = null;
 
-  feedback.hidden = false;
-  feedback.textContent = `Page ${entry.page} complete — ${humanDuration(entry.durationSeconds)}. May Allah accept it.`;
-
-  completeBtn.hidden = true;
-  completeBtn.disabled = false;
-  document.getElementById("startBtn").hidden = false;
-  document.getElementById("startBtn").textContent = "Start Next Time";
-  document.getElementById("timerDisplay").textContent = "00:00";
-
-  resetPhysicalCapture();
-
-  // Refresh cached history so Progress reflects this reading immediately.
+  // Refresh cached history so Progress + next page pick reflect this reading.
   const deviceId = getDeviceId();
   const { entries } = await fetchHistoryFromBackend(deviceId);
   cachedEntries = entries;
+
+  document.getElementById("completionDuration").textContent = humanDuration(entry.durationSeconds);
+  showScreen("screenCompletion");
 }
 
 // ==== PHYSICAL CAPTURE (image stays local, never sent to the Sheet) ====
@@ -289,6 +297,17 @@ function renderProgress(entries){
   }
 }
 
+function updateReturningLine(entries){
+  const line = document.getElementById("returningLine");
+  const daysReturned = computeProgress(entries).daysReturned;
+  if(daysReturned === 0){
+    line.hidden = true;
+    return;
+  }
+  line.hidden = false;
+  line.textContent = `This is day ${daysReturned + 1} of returning.`;
+}
+
 // ==== AI PROMPT ====
 function buildAiPrompt(pageNumber, surahNames){
   return `I'm reading page ${pageNumber} of the Mushaf (Surah context: ${surahNames}). I'm attaching a photo/screenshot of this Quran page.
@@ -309,39 +328,83 @@ Important: please clearly distinguish between the literal Quranic text/translati
 // ==== APP INIT / WIRING ====
 let currentPageData = null;
 let currentPageNumber = null;
+let pageReadyPromise = null;
 
-async function initApp(){
+// Prefetches (in the background) this device's history + a random unread
+// page, so tapping "Begin Today's Page" is instant. Does not touch the
+// visible screen — the landing screen stays untouched until Begin is tapped.
+async function prepareNextPage(){
   const deviceId = getDeviceId();
 
-  document.getElementById("pageMeta").textContent = "Loading your progress…";
   const { entries } = await fetchHistoryFromBackend(deviceId);
   cachedEntries = entries;
+  updateReturningLine(entries);
 
   const completedPages = getCompletedPages(entries);
   const pageNumber = pickRandomPage(completedPages);
   currentPageNumber = pageNumber;
 
-  document.getElementById("pageMeta").textContent = "Loading page " + pageNumber + "…";
-  try{
-    const data = await fetchPage(pageNumber);
-    currentPageData = data;
-    renderPage(data, pageNumber);
-  }catch(e){
-    document.getElementById("pageMeta").textContent = "Could not load page. Check your connection and reload.";
-    console.error(e);
-  }
+  const data = await fetchPage(pageNumber);
+  currentPageData = data;
 }
 
+function startPreparingNextPage(){
+  pageReadyPromise = prepareNextPage().catch((e) => {
+    console.error(e);
+    throw e;
+  });
+}
+
+document.getElementById("beginBtn").addEventListener("click", async () => {
+  const beginBtn = document.getElementById("beginBtn");
+  const landingError = document.getElementById("landingError");
+  const originalLabel = beginBtn.textContent;
+
+  if(!currentPageData){
+    beginBtn.disabled = true;
+    beginBtn.textContent = "Preparing…";
+    landingError.hidden = true;
+    try{
+      await pageReadyPromise;
+    }catch(e){
+      beginBtn.disabled = false;
+      beginBtn.textContent = originalLabel;
+      landingError.hidden = false;
+      startPreparingNextPage(); // allow retry on next tap
+      return;
+    }
+    beginBtn.disabled = false;
+    beginBtn.textContent = originalLabel;
+  }
+
+  renderPage(currentPageData, currentPageNumber);
+  resetReadingUI();
+  showScreen("screenReading");
+});
+
+document.getElementById("backBtn").addEventListener("click", () => {
+  if(readingStartTs !== null){
+    stopTimer();
+  }
+  showScreen("screenLanding");
+});
+
 document.getElementById("startBtn").addEventListener("click", () => {
-  document.getElementById("feedback").hidden = true;
-  document.getElementById("startBtn").textContent = "Start Reading";
   pendingEntry = null;
   startTimer();
 });
 
 document.getElementById("completeBtn").addEventListener("click", handleComplete);
 
-document.getElementById("progressBtn").addEventListener("click", async () => {
+document.getElementById("doneBtn").addEventListener("click", () => {
+  resetReadingUI();
+  currentPageData = null;
+  currentPageNumber = null;
+  startPreparingNextPage(); // get tomorrow's-visit page ready in the background
+  showScreen("screenLanding");
+});
+
+document.getElementById("journeyBtn").addEventListener("click", async () => {
   document.getElementById("progressOverlay").hidden = false;
   renderProgress(cachedEntries); // show cached instantly
   const deviceId = getDeviceId();
@@ -382,4 +445,4 @@ if("serviceWorker" in navigator){
   });
 }
 
-initApp();
+startPreparingNextPage();
