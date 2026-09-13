@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#efe7d6">
+<meta name="theme-color" content="#ede7da">
 <title>Remember Point</title>
 <meta name="description" content="One Page of Quran. Every Day.">
 <link rel="manifest" href="manifest.json">
@@ -11,6 +11,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Remember Point">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,7 +22,7 @@
 
   <!-- LANDING -->
   <section id="screenLanding" class="screen landing">
-    <button id="journeyBtn" class="corner-btn" aria-label="Your Journey">◆</button>
+    <button id="journeyBtn" class="round-btn landing-corner" aria-label="Your Journey">◆</button>
 
     <div class="landing-center">
       <p class="mark">﷽</p>
@@ -27,41 +30,53 @@
       <p class="app-tagline">One Page of Quran.<br>Every Day.</p>
 
       <button id="beginBtn" class="btn btn-primary btn-hero">Begin Today&rsquo;s Page</button>
+      <p class="hero-note">A random page will be shown</p>
 
-      <p id="landingError" class="landing-error" hidden>Could not load today's page. Check your connection and try again.</p>
+      <p id="landingError" class="landing-error" hidden>Could not load today&rsquo;s page. Check your connection and try again.</p>
       <p id="returningLine" class="returning-line" hidden></p>
     </div>
   </section>
 
   <!-- READING -->
   <section id="screenReading" class="screen reading" hidden>
-    <button id="backBtn" class="corner-btn" aria-label="Back">←</button>
 
-    <div class="reading-body">
-      <p id="pageMeta" class="page-meta">Page —</p>
-
-      <div id="quranText" class="quran-text" dir="rtl" lang="ar"></div>
-
-      <div class="timer-wrap">
-        <span id="timerDisplay" class="timer-display">00:00</span>
+    <header class="reading-header">
+      <button id="backBtn" class="round-btn" aria-label="Back">←</button>
+      <div class="reading-titles">
+        <h2 id="pageTitle" class="reading-title">Today&rsquo;s Page</h2>
+        <p id="pageSubtitle" class="reading-subtitle">Focus. Read. Reflect.</p>
       </div>
+      <button id="journeyBtnReading" class="round-btn" aria-label="Your Journey">◆</button>
+    </header>
 
-      <button id="startBtn" class="btn btn-primary btn-hero">Start Reading</button>
-      <button id="completeBtn" class="btn btn-complete btn-hero" hidden>Page Complete</button>
-
-      <p id="readingError" class="reading-error" hidden></p>
-
-      <div class="reading-secondary">
-        <label class="text-link" for="physicalInput">📷 Capture / Upload Page</label>
-        <input type="file" id="physicalInput" accept="image/*" capture="environment" hidden>
-        <button id="aiPromptBtn" class="text-link">Understand This Page</button>
+    <!-- HERO: the Quran page. Scales to fit; never scrolls. -->
+    <div class="quran-page" id="quranPage">
+      <div class="page-strip">
+        <span id="surahStrip" class="page-strip-side"></span>
+        <span id="juzLabel" class="page-strip-side page-strip-juz"></span>
       </div>
-
-      <div id="physicalPreviewWrap" class="physical-preview-wrap" hidden>
-        <img id="physicalPreview" class="physical-preview" alt="Captured Quran page">
-        <button id="clearPhysical" class="btn-link">Remove</button>
+      <div class="quran-frame" id="quranFrame">
+        <div class="quran-text" id="quranText" dir="rtl" lang="ar"></div>
       </div>
+      <div class="page-folio" id="pageFolio"></div>
     </div>
+
+    <div class="control-bar">
+      <div class="timer-chip">
+        <span id="timerDisplay" class="timer-display">00:00</span>
+        <span id="timerLabel" class="timer-label">Ready</span>
+      </div>
+      <button id="startBtn" class="btn btn-primary btn-control">Start Reading</button>
+      <button id="completeBtn" class="btn btn-complete btn-control" hidden>Page Complete</button>
+    </div>
+
+    <div class="reading-secondary">
+      <label class="chip-btn" for="physicalInput">Capture / Upload</label>
+      <input type="file" id="physicalInput" accept="image/*" capture="environment" hidden>
+      <button id="aiPromptBtn" class="chip-btn">Understand This Page</button>
+    </div>
+
+    <p id="readingError" class="reading-error" hidden></p>
   </section>
 
   <!-- COMPLETION -->
@@ -99,7 +114,7 @@
 
 <!-- AI PROMPT SHEET -->
 <div id="aiPromptOverlay" class="overlay" hidden>
-  <div class="sheet sheet-narrow">
+  <div class="sheet">
     <div class="sheet-header">
       <h2>Understand This Page</h2>
       <button id="closeAiPrompt" class="icon-btn" aria-label="Close">✕</button>
@@ -108,6 +123,19 @@
     <textarea id="aiPromptText" class="ai-prompt-text" readonly></textarea>
     <button id="copyPromptBtn" class="btn btn-primary">Copy Prompt</button>
     <span id="copyConfirm" class="copy-confirm" hidden>Copied ✓</span>
+  </div>
+</div>
+
+<!-- PHYSICAL QURAN PHOTO SHEET (kept out of the reading layout so the page never shifts) -->
+<div id="physicalOverlay" class="overlay" hidden>
+  <div class="sheet">
+    <div class="sheet-header">
+      <h2>Your Page Photo</h2>
+      <button id="closePhysical" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <p class="hint">This photo stays on your phone. Only the filename is recorded with your reading.</p>
+    <img id="physicalPreview" class="physical-preview" alt="Captured Quran page">
+    <button id="clearPhysical" class="btn-link">Remove photo</button>
   </div>
 </div>
 

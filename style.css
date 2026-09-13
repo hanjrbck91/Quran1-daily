@@ -1,113 +1,123 @@
 :root{
-  --paper:#efe7d6;
-  --paper-deep:#e6dcc6;
-  --surface:#f8f3e7;
-  --ink:#2f2a22;
-  --ink-soft:#726a58;
-  --ink-faint:#9b9280;
-  --accent:#8a7047;
-  --accent-deep:#3d3327;
-  --line:#ddd2b6;
-  --shadow:rgba(61,51,39,0.10);
-  --shadow-soft:rgba(61,51,39,0.06);
-  --complete:#5c6e4f;
+  --bg:#ede7da;
+  --surface:#f5f0e6;
+  --surface-hi:#faf7f0;
+  --paper:#fbf8f1;
+  --ink:#2b2621;
+  --ink-soft:#6e6558;
+  --ink-faint:#9a9183;
+  --line:#dcd3c2;
+  --line-soft:#e6ddcc;
+  --gold:#9a7b45;
+  --accent-deep:#3a3128;
+  --complete:#5a6b4e;
+  --danger:#8a4a3d;
+
+  --lift:0 1px 2px rgba(58,49,40,0.05), 0 8px 22px rgba(58,49,40,0.07);
+  --lift-sm:0 1px 2px rgba(58,49,40,0.05), 0 3px 10px rgba(58,49,40,0.05);
+  --inset-hi:inset 0 1px 0 rgba(255,255,255,0.75);
+
+  --safe-t:env(safe-area-inset-top, 0px);
+  --safe-b:env(safe-area-inset-bottom, 0px);
 }
 
 *{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  overflow:hidden;               /* the app owns its own layout; nothing scrolls the page */
+  overscroll-behavior:none;
+}
 body{
-  background:var(--paper);
+  background:var(--bg);
   color:var(--ink);
   font-family:Georgia,"Times New Roman",serif;
-  min-height:100vh;
-  min-height:100dvh;
   -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
 }
-
 button{font-family:inherit;}
 
 .app{
-  max-width:480px;
+  max-width:460px;
   margin:0 auto;
-  min-height:100vh;
-  min-height:100dvh;
+  height:100%;
   position:relative;
 }
 
-/* ---------- shared screen shell ---------- */
+/* ---------- screens ---------- */
 .screen{
-  min-height:100vh;
-  min-height:100dvh;
-  padding:24px 24px 40px;
+  height:100%;
   display:flex;
   flex-direction:column;
-  animation:fadeIn 0.35s ease;
+  padding:calc(10px + var(--safe-t)) 18px calc(10px + var(--safe-b));
+  animation:fadeIn 0.3s ease;
 }
-.screen[hidden]{
-  display:none;
-}
-@keyframes fadeIn{
-  from{opacity:0;}
-  to{opacity:1;}
-}
+.screen[hidden]{display:none;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 
-.corner-btn{
-  align-self:flex-start;
-  background:none;
-  border:none;
-  font-size:1.05rem;
-  color:var(--ink-faint);
+.round-btn{
+  width:38px;
+  height:38px;
+  flex:0 0 38px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--surface-hi);
+  color:var(--ink-soft);
+  font-size:0.95rem;
   cursor:pointer;
-  padding:8px;
-  margin:-8px 0 0 -8px;
-}
-.corner-btn:active{color:var(--accent-deep);}
-
-/* ---------- LANDING ---------- */
-.landing{
+  box-shadow:var(--lift-sm), var(--inset-hi);
+  display:flex;
+  align-items:center;
   justify-content:center;
 }
+.round-btn:active{background:var(--surface);}
+
+/* ---------- LANDING ---------- */
+.landing{justify-content:center;overflow-y:auto;}
+.landing-corner{position:absolute;top:calc(14px + var(--safe-t));left:18px;}
 .landing-center{
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
   text-align:center;
-  gap:6px;
 }
-.mark{
-  font-size:1.1rem;
-  color:var(--ink-faint);
-  margin:0 0 10px;
-}
+.mark{font-size:1.15rem;color:var(--gold);margin:0 0 12px;opacity:0.75;}
 .app-name{
-  font-size:2rem;
+  font-size:2.05rem;
   font-weight:700;
-  letter-spacing:0.01em;
   color:var(--accent-deep);
-  margin:0 0 14px;
+  margin:0 0 12px;
+  letter-spacing:0.005em;
 }
 .app-tagline{
-  font-size:1.05rem;
+  font-size:1.02rem;
   font-style:italic;
   color:var(--ink-soft);
-  line-height:1.6;
-  margin:0 0 40px;
+  line-height:1.65;
+  margin:0 0 38px;
+}
+.hero-note{
+  font-size:0.74rem;
+  color:var(--ink-faint);
+  margin:12px 0 0;
+  letter-spacing:0.02em;
 }
 .returning-line{
   font-size:0.85rem;
   color:var(--ink-faint);
-  margin:28px 0 0;
+  margin:30px 0 0;
   font-style:italic;
 }
 .landing-error{
   font-size:0.82rem;
-  color:#8a4a3d;
-  margin:18px 0 0;
+  color:var(--danger);
+  margin:16px 0 0;
   max-width:280px;
 }
 
-/* ---------- shared buttons ---------- */
+/* ---------- buttons ---------- */
 .btn{
   font-size:1rem;
   border-radius:999px;
@@ -117,39 +127,21 @@ button{font-family:inherit;}
 }
 .btn-hero{
   width:100%;
-  max-width:340px;
+  max-width:320px;
   padding:17px 20px;
   font-size:1.05rem;
-  letter-spacing:0.01em;
-  box-shadow:0 6px 16px var(--shadow);
+  box-shadow:var(--lift);
 }
-.btn-primary{
-  background:var(--accent-deep);
-  color:var(--surface);
-}
+.btn-primary{background:var(--accent-deep);color:var(--surface-hi);}
 .btn-primary:active{opacity:0.88;}
-.btn-primary:disabled{opacity:0.55;cursor:default;}
-.btn-complete{
-  background:var(--complete);
-  color:var(--surface);
-}
+.btn-primary:disabled{opacity:0.5;cursor:default;}
+.btn-complete{background:var(--complete);color:var(--surface-hi);}
 .btn-complete:active{opacity:0.88;}
-.btn-complete:disabled{opacity:0.55;cursor:default;}
-
-.text-link{
-  background:none;
-  border:none;
-  color:var(--ink-faint);
-  font-size:0.82rem;
-  cursor:pointer;
-  padding:6px 4px;
-  font-family:inherit;
-}
-.text-link:active{color:var(--accent-deep);}
+.btn-complete:disabled{opacity:0.5;cursor:default;}
 
 .btn-link{
   display:block;
-  margin:8px auto 0;
+  margin:10px auto 0;
   background:none;
   border:none;
   color:var(--ink-faint);
@@ -160,95 +152,195 @@ button{font-family:inherit;}
 }
 
 /* ---------- READING ---------- */
-.reading-body{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  text-align:center;
-  padding-top:8px;
+.reading{
+  padding-left:14px;
+  padding-right:14px;
+  gap:8px;
+  overflow:hidden;               /* nothing in the reading canvas scrolls */
 }
-.page-meta{
+
+.reading-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:0 0 auto;
+}
+.reading-titles{flex:1;min-width:0;text-align:center;}
+.reading-title{
+  font-size:0.95rem;
+  font-weight:700;
+  color:var(--accent-deep);
+  margin:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.reading-subtitle{
   font-size:0.72rem;
   color:var(--ink-faint);
-  letter-spacing:0.08em;
-  text-transform:uppercase;
-  margin:6px 0 28px;
+  margin:2px 0 0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* the hero: a manuscript page that fills whatever height is left */
+.quran-page{
+  flex:1 1 auto;
+  min-height:0;                  /* critical: lets the flex child actually shrink */
+  display:flex;
+  flex-direction:column;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:var(--lift), var(--inset-hi);
+  padding:8px 8px 4px;
+  position:relative;
+  overflow:hidden;
+}
+.page-strip{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:2px 8px 6px;
+  border-bottom:1px solid var(--line-soft);
+  font-family:"Scheherazade New","Amiri","Noto Naskh Arabic",serif;
+  font-size:0.82rem;
+  color:var(--gold);
+  direction:rtl;
+}
+.page-strip-side{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:65%;
+}
+.page-strip-juz{flex:0 0 auto;opacity:0.8;}
+
+/* inner frame: fixed box the text is measured against and fitted into */
+.quran-frame{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+  padding:10px 6px;
+  display:flex;
+  align-items:center;
+  border:1px solid var(--line-soft);
+  border-radius:10px;
+  margin:6px 2px 4px;
+  background:linear-gradient(180deg,#fffdf8 0%,var(--paper) 100%);
 }
 .quran-text{
-  font-family:"Traditional Arabic","Scheherazade New","Amiri","Noto Naskh Arabic",serif;
-  font-size:1.55rem;
-  line-height:2.35;
-  color:var(--ink);
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:20px;
-  padding:28px 20px;
-  box-shadow:0 4px 18px var(--shadow-soft);
   width:100%;
-  margin-bottom:28px;
+  font-family:"Scheherazade New","Amiri","Noto Naskh Arabic","Traditional Arabic",serif;
+  font-size:22px;               /* replaced at runtime by the fit algorithm */
+  line-height:1.78;             /* tight enough to buy font size, loose enough for tashkeel */
+  text-align:center;
+  color:var(--ink);
+  transform-origin:top center;
 }
 .quran-text .ayah-num{
   display:inline-block;
-  font-size:0.85rem;
-  color:var(--accent);
-  margin:0 4px;
+  font-size:0.72em;
+  color:var(--gold);
+  margin:0 2px;
+}
+.page-folio{
+  flex:0 0 auto;
+  text-align:center;
+  font-family:"Scheherazade New","Amiri",serif;
+  font-size:0.8rem;
+  color:var(--gold);
+  padding:2px 0 2px;
+  letter-spacing:0.05em;
 }
 
-.timer-wrap{
-  margin-bottom:22px;
+/* timer + primary action on one row, to give the page maximum height */
+.control-bar{
+  flex:0 0 auto;
+  display:flex;
+  align-items:stretch;
+  gap:10px;
+}
+.timer-chip{
+  flex:0 0 auto;
+  min-width:98px;
+  background:var(--surface-hi);
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:var(--lift-sm), var(--inset-hi);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:8px 12px;
 }
 .timer-display{
-  font-size:2.6rem;
+  font-size:1.3rem;
   font-weight:700;
   color:var(--accent-deep);
   font-variant-numeric:tabular-nums;
-  letter-spacing:0.03em;
+  letter-spacing:0.02em;
+  line-height:1.15;
 }
-
-.reading-error{
-  font-size:0.82rem;
-  color:#8a4a3d;
-  margin:14px 0 0;
-  max-width:320px;
+.timer-label{
+  font-size:0.62rem;
+  color:var(--ink-faint);
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+.timer-chip.running .timer-display{color:var(--complete);}
+.btn-control{
+  flex:1 1 auto;
+  border-radius:16px;
+  padding:14px 12px;
+  font-size:1rem;
+  box-shadow:var(--lift-sm);
+  min-height:56px;
 }
 
 .reading-secondary{
-  margin-top:auto;
-  padding-top:28px;
+  flex:0 0 auto;
   display:flex;
-  justify-content:center;
-  gap:22px;
-  flex-wrap:wrap;
+  gap:8px;
 }
-
-.physical-preview-wrap{
+.chip-btn{
+  flex:1 1 0;
   text-align:center;
-  margin-top:16px;
+  background:var(--surface);
+  border:1px solid var(--line-soft);
+  border-radius:13px;
+  color:var(--ink-soft);
+  font-size:0.76rem;
+  padding:11px 6px;
+  cursor:pointer;
+  box-shadow:var(--inset-hi);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
-.physical-preview{
-  max-width:100%;
-  max-height:220px;
-  border-radius:14px;
-  border:1px solid var(--line);
+.chip-btn:active{background:var(--surface-hi);}
+
+.reading-error{
+  flex:0 0 auto;
+  font-size:0.78rem;
+  color:var(--danger);
+  margin:0;
+  text-align:center;
 }
 
 /* ---------- COMPLETION ---------- */
-.completion{
-  justify-content:center;
-}
+.completion{justify-content:center;}
 .completion-center{
   display:flex;
   flex-direction:column;
   align-items:center;
   text-align:center;
-  gap:4px;
 }
-.completion-lead{
-  font-size:1.05rem;
-  color:var(--ink-soft);
-  margin:0;
-}
+.completion-lead{font-size:1.05rem;color:var(--ink-soft);margin:0;}
 .completion-duration{
   font-size:2.4rem;
   font-weight:700;
@@ -259,10 +351,10 @@ button{font-family:inherit;}
   font-size:0.9rem;
   font-style:italic;
   color:var(--ink-faint);
-  margin:6px 0 40px;
+  margin:8px 0 40px;
 }
 
-/* ---------- overlays / sheets ---------- */
+/* ---------- sheets ---------- */
 .overlay{
   position:fixed;
   inset:0;
@@ -272,27 +364,23 @@ button{font-family:inherit;}
   justify-content:center;
   z-index:50;
 }
-.overlay[hidden]{
-  display:none;
-}
+.overlay[hidden]{display:none;}
 .sheet{
-  background:var(--paper);
+  background:var(--bg);
   width:100%;
-  max-width:480px;
+  max-width:460px;
   border-radius:22px 22px 0 0;
-  padding:22px 22px 32px;
-  max-height:85vh;
+  padding:20px 20px calc(26px + var(--safe-b));
+  max-height:86vh;
+  max-height:86dvh;
   overflow-y:auto;
-  box-shadow:0 -8px 30px var(--shadow);
-}
-.sheet-narrow{
-  max-width:480px;
+  box-shadow:0 -8px 30px rgba(58,49,40,0.18);
 }
 .sheet-header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
 .sheet-header h2{
   font-size:1.05rem;
@@ -301,7 +389,7 @@ button{font-family:inherit;}
   color:var(--accent-deep);
 }
 .icon-btn{
-  background:none;border:none;font-size:1.1rem;cursor:pointer;
+  background:none;border:none;font-size:1.05rem;cursor:pointer;
   padding:6px;border-radius:8px;color:var(--ink-faint);
 }
 .icon-btn:active{color:var(--accent-deep);}
@@ -313,11 +401,12 @@ button{font-family:inherit;}
   margin-bottom:18px;
 }
 .stat{
-  background:var(--surface);
-  border:1px solid var(--line);
+  background:var(--surface-hi);
+  border:1px solid var(--line-soft);
   border-radius:14px;
   padding:14px 10px;
   text-align:center;
+  box-shadow:var(--inset-hi);
 }
 .stat-num{
   display:block;
@@ -326,7 +415,7 @@ button{font-family:inherit;}
   color:var(--accent-deep);
 }
 .stat-label{
-  font-size:0.68rem;
+  font-size:0.67rem;
   color:var(--ink-faint);
   text-transform:uppercase;
   letter-spacing:0.03em;
@@ -343,50 +432,70 @@ button{font-family:inherit;}
   grid-template-columns:repeat(7,1fr);
   gap:4px;
 }
-.history-day{
-  aspect-ratio:1;
-  border-radius:4px;
-  background:var(--line);
-}
-.history-day.active{
-  background:var(--accent);
-}
+.history-day{aspect-ratio:1;border-radius:5px;background:var(--line);}
+.history-day.active{background:var(--gold);}
 
 .hint{
   font-size:0.82rem;
   color:var(--ink-soft);
-  margin-bottom:12px;
+  margin:0 0 12px;
   line-height:1.5;
 }
 .ai-prompt-text{
   width:100%;
-  min-height:180px;
-  font-family:monospace;
+  min-height:170px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   font-size:0.78rem;
   padding:12px;
   border:1px solid var(--line);
   border-radius:12px;
-  background:var(--surface);
+  background:var(--surface-hi);
   color:var(--ink);
   margin-bottom:12px;
 }
-.copy-confirm{
-  margin-left:10px;
-  color:var(--complete);
-  font-size:0.85rem;
+.copy-confirm{margin-left:10px;color:var(--complete);font-size:0.85rem;}
+
+.physical-preview{
+  display:block;
+  max-width:100%;
+  max-height:46vh;
+  margin:0 auto;
+  border-radius:14px;
+  border:1px solid var(--line);
 }
 
-@media (min-width:481px){
-  .screen{
-    min-height:auto;
-    margin:32px 0;
-    border-radius:28px;
-    background:var(--surface);
-    box-shadow:0 12px 40px var(--shadow);
+/* ---------- short viewports (Safari with its chrome showing) ----------
+   Give the Quran page back every pixel the interface can spare, so dense
+   pages don't have to shrink the Arabic to stay on one screen. */
+@media (max-height:740px){
+  .reading{gap:6px;padding-left:12px;padding-right:12px;}
+  .round-btn{width:34px;height:34px;flex-basis:34px;font-size:0.9rem;}
+  .reading-title{font-size:0.88rem;}
+  .reading-subtitle{font-size:0.68rem;}
+  .quran-page{padding:6px 6px 3px;border-radius:14px;}
+  .quran-frame{padding:8px 4px;margin:4px 1px 3px;}
+  .btn-control{min-height:50px;padding:12px 10px;font-size:0.95rem;}
+  .timer-chip{min-width:90px;padding:6px 10px;}
+  .timer-display{font-size:1.2rem;}
+  .chip-btn{padding:9px 6px;font-size:0.73rem;}
+}
+/* Very short (older/smaller phones, or Safari with all bars): the header
+   already states page + surah, so the in-page strip and folio can go. */
+@media (max-height:680px){
+  .page-strip{display:none;}
+  .page-folio{display:none;}
+  .quran-frame{margin:0 1px;border:none;}
+}
+
+/* ---------- wider screens: present the phone canvas as an object ---------- */
+@media (min-width:481px) and (min-height:560px){
+  body{display:flex;align-items:center;justify-content:center;}
+  .app{
+    height:min(880px, 100%);
+    border-radius:30px;
+    background:var(--bg);
+    box-shadow:0 18px 60px rgba(58,49,40,0.18);
     border:1px solid var(--line);
-  }
-  body{
-    display:flex;
-    justify-content:center;
+    overflow:hidden;
   }
 }

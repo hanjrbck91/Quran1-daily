@@ -85,16 +85,93 @@ async function fetchPage(pageNumber){
   return data.data; // { ayahs: [...], surahs: {...}, number, ... }
 }
 
+function toArabicDigits(n){
+  return String(n).replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
+}
+
 function renderPage(pageData, pageNumber){
-  const meta = document.getElementById("pageMeta");
-  const textEl = document.getElementById("quranText");
+  const ayahs = pageData.ayahs;
+  const surahNamesEn = [...new Set(ayahs.map(a => a.surah.englishName))];
+  const surahNamesAr = [...new Set(ayahs.map(a => a.surah.name))];
+  const juz = ayahs[0] && ayahs[0].juz;
 
-  const surahNames = [...new Set(pageData.ayahs.map(a => a.surah.englishName + " (" + a.surah.name + ")"))];
-  meta.textContent = `Page ${pageNumber} of ${TOTAL_PAGES} · ${surahNames.join(" · ")}`;
+  document.getElementById("pageTitle").textContent = `Page ${pageNumber} of ${TOTAL_PAGES}`;
+  document.getElementById("pageSubtitle").textContent = surahNamesEn.join(" · ");
+  document.getElementById("surahStrip").textContent = surahNamesAr.join(" · ");
+  document.getElementById("juzLabel").textContent = juz ? `الجزء ${toArabicDigits(juz)}` : "";
+  document.getElementById("pageFolio").textContent = toArabicDigits(pageNumber);
 
-  textEl.innerHTML = pageData.ayahs.map(a => {
-    return `${a.text} <span class="ayah-num">﴿${a.numberInSurah}﴾</span>`;
+  document.getElementById("quranText").innerHTML = ayahs.map(a => {
+    return `${a.text} <span class="ayah-num">﴿${toArabicDigits(a.numberInSurah)}﴾</span>`;
   }).join(" ");
+}
+
+// ==== PAGE FIT ====
+// The whole Quran page must be visible at once, with no scrolling. Pages vary
+// a lot in density, so we binary-search the largest font size that still fits
+// the available box. If even the smallest readable size overflows (very dense
+// pages on short viewports), we scale the text block proportionally as a last
+// resort — it stays real, selectable, pinch-zoomable text either way.
+const FIT_MAX_FONT = 30;
+const FIT_MIN_FONT = 13;
+
+function fitQuranPage(){
+  const frame = document.getElementById("quranFrame");
+  const textEl = document.getElementById("quranText");
+  if(!frame || !textEl || !textEl.textContent.trim()) return;
+
+  const frameStyle = getComputedStyle(frame);
+  const available = frame.clientHeight
+    - parseFloat(frameStyle.paddingTop)
+    - parseFloat(frameStyle.paddingBottom);
+  if(available <= 0) return; // screen not visible yet — nothing to measure against
+
+  textEl.style.transform = "none";
+
+  let lo = FIT_MIN_FONT;
+  let hi = FIT_MAX_FONT;
+  let best = FIT_MIN_FONT;
+
+  while(hi - lo > 0.5){
+    const mid = (lo + hi) / 2;
+    textEl.style.fontSize = mid + "px";
+    if(textEl.scrollHeight <= available){
+      best = mid;
+      lo = mid;
+    }else{
+      hi = mid;
+    }
+  }
+
+  textEl.style.fontSize = best + "px";
+
+  if(textEl.scrollHeight > available){
+    const scale = available / textEl.scrollHeight;
+    textEl.style.transform = `scale(${scale})`;
+  }
+}
+
+let fitFrameHandle = null;
+// Runs immediately (reading clientHeight forces layout, which is what we want
+// right after the screen is unhidden), then again once the frame settles and
+// once more after the fade-in / late webfont swap, since either changes metrics.
+function scheduleFit(){
+  fitQuranPage();
+  if(fitFrameHandle) cancelAnimationFrame(fitFrameHandle);
+  fitFrameHandle = requestAnimationFrame(() => {
+    fitFrameHandle = null;
+    fitQuranPage();
+  });
+  setTimeout(fitQuranPage, 320);
+}
+
+window.addEventListener("resize", scheduleFit);
+window.addEventListener("orientationchange", scheduleFit);
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", scheduleFit);
+}
+if(document.fonts && document.fonts.ready){
+  document.fonts.ready.then(scheduleFit);
 }
 
 // ==== SCREEN SWITCHING ====
@@ -121,6 +198,8 @@ function startTimer(){
   document.getElementById("completeBtn").hidden = false;
   document.getElementById("completeBtn").disabled = false;
   document.getElementById("completeBtn").textContent = "Page Complete";
+  document.querySelector(".timer-chip").classList.add("running");
+  document.getElementById("timerLabel").textContent = "Reading";
   timerInterval = setInterval(() => {
     document.getElementById("timerDisplay").textContent = formatElapsed(Date.now() - readingStartTs);
   }, 250);
@@ -141,6 +220,8 @@ function resetReadingUI(){
   document.getElementById("completeBtn").disabled = false;
   document.getElementById("completeBtn").textContent = "Page Complete";
   document.getElementById("readingError").hidden = true;
+  document.querySelector(".timer-chip").classList.remove("running");
+  document.getElementById("timerLabel").textContent = "Ready";
   resetPhysicalCapture();
 }
 
@@ -177,6 +258,7 @@ async function handleComplete(){
 
   completeBtn.disabled = true;
   completeBtn.textContent = "Saving…";
+  document.getElementById("timerLabel").textContent = "Saving";
   errorEl.hidden = true;
 
   const result = await saveToSheet(entry);
@@ -194,10 +276,14 @@ async function handleComplete(){
 
   pendingEntry = null;
 
-  // Refresh cached history so Progress + next page pick reflect this reading.
-  const deviceId = getDeviceId();
-  const { entries } = await fetchHistoryFromBackend(deviceId);
-  cachedEntries = entries;
+  // The POST coming back ok is the backend confirming the save, so the
+  // completion state can show straight away. Refreshing the cached history is
+  // only for the Journey sheet, so it runs in the background rather than
+  // making the user wait on a second round-trip.
+  fetchHistoryFromBackend(getDeviceId()).then(({ entries }) => {
+    cachedEntries = entries;
+    updateReturningLine(entries);
+  });
 
   document.getElementById("completionDuration").textContent = humanDuration(entry.durationSeconds);
   showScreen("screenCompletion");
@@ -209,9 +295,10 @@ let currentImageFilename = "";
 function resetPhysicalCapture(){
   currentImageFilename = "";
   currentSource = "digital";
-  document.getElementById("physicalPreviewWrap").hidden = true;
+  document.getElementById("physicalOverlay").hidden = true;
   document.getElementById("physicalPreview").src = "";
   document.getElementById("physicalInput").value = "";
+  document.querySelector('label[for="physicalInput"]').textContent = "Capture / Upload";
 }
 
 document.getElementById("physicalInput").addEventListener("change", (e) => {
@@ -222,9 +309,14 @@ document.getElementById("physicalInput").addEventListener("change", (e) => {
   const reader = new FileReader();
   reader.onload = (ev) => {
     document.getElementById("physicalPreview").src = ev.target.result;
-    document.getElementById("physicalPreviewWrap").hidden = false;
+    document.getElementById("physicalOverlay").hidden = false;
+    document.querySelector('label[for="physicalInput"]').textContent = "Photo attached ✓";
   };
   reader.readAsDataURL(file);
+});
+
+document.getElementById("closePhysical").addEventListener("click", () => {
+  document.getElementById("physicalOverlay").hidden = true;
 });
 
 document.getElementById("clearPhysical").addEventListener("click", resetPhysicalCapture);
@@ -380,6 +472,7 @@ document.getElementById("beginBtn").addEventListener("click", async () => {
   renderPage(currentPageData, currentPageNumber);
   resetReadingUI();
   showScreen("screenReading");
+  scheduleFit(); // must run after the screen is visible, or there's nothing to measure
 });
 
 document.getElementById("backBtn").addEventListener("click", () => {
@@ -404,14 +497,17 @@ document.getElementById("doneBtn").addEventListener("click", () => {
   showScreen("screenLanding");
 });
 
-document.getElementById("journeyBtn").addEventListener("click", async () => {
+async function openJourney(){
   document.getElementById("progressOverlay").hidden = false;
   renderProgress(cachedEntries); // show cached instantly
   const deviceId = getDeviceId();
   const { entries } = await fetchHistoryFromBackend(deviceId);
   cachedEntries = entries;
   renderProgress(entries); // then refresh with latest from the Sheet
-});
+}
+
+document.getElementById("journeyBtn").addEventListener("click", openJourney);
+document.getElementById("journeyBtnReading").addEventListener("click", openJourney);
 document.getElementById("closeProgress").addEventListener("click", () => {
   document.getElementById("progressOverlay").hidden = true;
 });
