@@ -1,4 +1,4 @@
-const CACHE_NAME = "quran1daily-v1";
+const CACHE_NAME = "quran1daily-v2";
 const SHELL = [
   "./",
   "./index.html",
@@ -33,11 +33,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Network-first: always prefer the latest deployed file when online,
+  // so a shipped fix is never stuck behind a stale cached copy.
+  // Falls back to cache only when offline.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((res) => {
+    fetch(event.request)
+      .then((res) => {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
         return res;
-      }).catch(() => cached);
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });
