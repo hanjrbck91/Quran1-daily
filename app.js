@@ -4,6 +4,24 @@ const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwoWvbD00mxX8Z11
 const TOTAL_PAGES = 604;
 const LS_DEVICE_KEY = "qd_device_id"; // only harmless device identifier lives locally
 
+// ==== VIEWPORT HEIGHT ====
+// iOS Safari resolves CSS height:100% (and even 100dvh, mid-toolbar-animation)
+// against the layout viewport, which is taller than what you can actually see
+// while the toolbars are up. That pushed the top of the reading screen off
+// screen with no way to scroll back to it. visualViewport.height is the real
+// visible height, so the app canvas is sized from that.
+function setAppHeight(){
+  const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  document.documentElement.style.setProperty("--app-h", h + "px");
+}
+setAppHeight();
+window.addEventListener("resize", setAppHeight);
+window.addEventListener("orientationchange", setAppHeight);
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", setAppHeight);
+  window.visualViewport.addEventListener("scroll", setAppHeight);
+}
+
 // ==== DEVICE ID (local, anonymous only) ====
 function getDeviceId(){
   let id = localStorage.getItem(LS_DEVICE_KEY);
@@ -95,10 +113,13 @@ function renderPage(pageData, pageNumber){
   const surahNamesAr = [...new Set(ayahs.map(a => a.surah.name))];
   const juz = ayahs[0] && ayahs[0].juz;
 
+  const arName = surahNamesAr.join(" · ");
   document.getElementById("pageTitle").textContent = `Page ${pageNumber} of ${TOTAL_PAGES}`;
-  document.getElementById("pageSubtitle").textContent = surahNamesEn.join(" · ");
-  document.getElementById("surahStrip").textContent = surahNamesAr.join(" · ");
-  document.getElementById("juzLabel").textContent = juz ? `الجزء ${toArabicDigits(juz)}` : "";
+  document.getElementById("pageSubtitle").textContent =
+    surahNamesEn.map((en, i) => `Surah ${en}`).join(" · ") + (arName ? ` (${arName.replace(/سُورَةُ\s*/g, "")})` : "");
+  document.getElementById("surahStrip").textContent = arName;
+  document.getElementById("juzLabel").textContent = juz ? toArabicDigits(juz) : "";
+  document.getElementById("pageStripNum").textContent = toArabicDigits(pageNumber);
   document.getElementById("pageFolio").textContent = toArabicDigits(pageNumber);
 
   document.getElementById("quranText").innerHTML = ayahs.map(a => {
@@ -155,14 +176,19 @@ let fitFrameHandle = null;
 // Runs immediately (reading clientHeight forces layout, which is what we want
 // right after the screen is unhidden), then again once the frame settles and
 // once more after the fade-in / late webfont swap, since either changes metrics.
-function scheduleFit(){
+function syncHeightAndFit(){
+  setAppHeight();   // re-read the real visible height; it drifts as toolbars move
   fitQuranPage();
+}
+
+function scheduleFit(){
+  syncHeightAndFit();
   if(fitFrameHandle) cancelAnimationFrame(fitFrameHandle);
   fitFrameHandle = requestAnimationFrame(() => {
     fitFrameHandle = null;
-    fitQuranPage();
+    syncHeightAndFit();
   });
-  setTimeout(fitQuranPage, 320);
+  setTimeout(syncHeightAndFit, 320);
 }
 
 window.addEventListener("resize", scheduleFit);
@@ -197,9 +223,8 @@ function startTimer(){
   document.getElementById("startBtn").hidden = true;
   document.getElementById("completeBtn").hidden = false;
   document.getElementById("completeBtn").disabled = false;
-  document.getElementById("completeBtn").textContent = "Page Complete";
-  document.querySelector(".timer-chip").classList.add("running");
-  document.getElementById("timerLabel").textContent = "Reading";
+  document.querySelector(".timer-bar").classList.add("running");
+  document.getElementById("timerLabel").textContent = "Reading — tap ✓ when done";
   timerInterval = setInterval(() => {
     document.getElementById("timerDisplay").textContent = formatElapsed(Date.now() - readingStartTs);
   }, 250);
@@ -213,15 +238,18 @@ function stopTimer(){
 }
 
 function resetReadingUI(){
+  clearInterval(timerInterval);
+  readingStartTs = null;
   document.getElementById("timerDisplay").textContent = "00:00";
   document.getElementById("startBtn").hidden = false;
-  document.getElementById("startBtn").textContent = "Start Reading";
+  document.getElementById("startBtn").disabled = false;
   document.getElementById("completeBtn").hidden = true;
   document.getElementById("completeBtn").disabled = false;
-  document.getElementById("completeBtn").textContent = "Page Complete";
   document.getElementById("readingError").hidden = true;
-  document.querySelector(".timer-chip").classList.remove("running");
-  document.getElementById("timerLabel").textContent = "Ready";
+  document.querySelector(".timer-bar").classList.remove("running");
+  document.getElementById("timerLabel").textContent = "Ready when you are";
+  pendingEntry = null;
+  resetSaveLater();
   resetPhysicalCapture();
 }
 
@@ -257,8 +285,8 @@ async function handleComplete(){
   }
 
   completeBtn.disabled = true;
-  completeBtn.textContent = "Saving…";
-  document.getElementById("timerLabel").textContent = "Saving";
+  document.getElementById("resetBtn").disabled = true;
+  document.getElementById("timerLabel").textContent = "Saving…";
   errorEl.hidden = true;
 
   const result = await saveToSheet(entry);
@@ -266,7 +294,8 @@ async function handleComplete(){
   if(!result.ok){
     pendingEntry = entry;
     completeBtn.disabled = false;
-    completeBtn.textContent = "Retry Save";
+    document.getElementById("resetBtn").disabled = false;
+    document.getElementById("timerLabel").textContent = "Tap ✓ to retry";
     errorEl.hidden = false;
     errorEl.textContent = result.error === "not_configured"
       ? "Backend not configured yet — your reading was not saved."
@@ -298,7 +327,18 @@ function resetPhysicalCapture(){
   document.getElementById("physicalOverlay").hidden = true;
   document.getElementById("physicalPreview").src = "";
   document.getElementById("physicalInput").value = "";
-  document.querySelector('label[for="physicalInput"]').textContent = "Capture / Upload";
+  document.getElementById("captureLabel").textContent = "Capture / Upload";
+  document.querySelector('label[for="physicalInput"]').classList.remove("is-on");
+}
+
+// "Save for Later" is a placeholder in this iteration — it deliberately does
+// not persist anything, so it says so rather than pretending to have saved.
+let saveLaterTimeout = null;
+function resetSaveLater(){
+  clearTimeout(saveLaterTimeout);
+  document.getElementById("saveLaterLabel").textContent = "Save for";
+  document.getElementById("saveLaterSub").textContent = "Later";
+  document.getElementById("saveLaterBtn").classList.remove("is-on");
 }
 
 document.getElementById("physicalInput").addEventListener("change", (e) => {
@@ -310,7 +350,8 @@ document.getElementById("physicalInput").addEventListener("change", (e) => {
   reader.onload = (ev) => {
     document.getElementById("physicalPreview").src = ev.target.result;
     document.getElementById("physicalOverlay").hidden = false;
-    document.querySelector('label[for="physicalInput"]').textContent = "Photo attached ✓";
+    document.getElementById("captureLabel").textContent = "Photo attached";
+    document.querySelector('label[for="physicalInput"]').classList.add("is-on");
   };
   reader.readAsDataURL(file);
 });
@@ -394,11 +435,31 @@ function updateReturningLine(entries){
   const daysReturned = computeProgress(entries).daysReturned;
   if(daysReturned === 0){
     line.hidden = true;
-    return;
+  }else{
+    line.hidden = false;
+    line.textContent = `This is day ${daysReturned + 1} of returning.`;
   }
-  line.hidden = false;
-  line.textContent = `This is day ${daysReturned + 1} of returning.`;
+  renderLandingTiles(entries);
 }
+
+// the four tiles on the landing screen, from the same backend entries
+function renderLandingTiles(entries){
+  const p = computeProgress(entries);
+  document.getElementById("tileWeekPages").textContent = p.weekPages;
+  document.getElementById("tileWeekMinutes").innerHTML = p.weekMinutes + "<small>min</small>";
+  document.getElementById("tileMonthPages").textContent = p.monthPages;
+  document.getElementById("tileTotalPages").textContent = p.totalPages;
+}
+
+function renderDateChip(){
+  const now = new Date();
+  const dow = now.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
+  const mon = now.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+  document.getElementById("dateDow").textContent = dow;
+  document.getElementById("dateDay").textContent = now.getDate();
+  document.getElementById("dateMon").textContent = `${mon} ${now.getFullYear()}`;
+}
+renderDateChip();
 
 // ==== AI PROMPT ====
 function buildAiPrompt(pageNumber, surahNames){
@@ -488,6 +549,38 @@ document.getElementById("startBtn").addEventListener("click", () => {
 });
 
 document.getElementById("completeBtn").addEventListener("click", handleComplete);
+
+// stop / reset: abandon the current timing without saving anything
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if(readingStartTs === null && !pendingEntry) return;
+  resetReadingUI();
+});
+
+document.getElementById("saveLaterBtn").addEventListener("click", () => {
+  const btn = document.getElementById("saveLaterBtn");
+  btn.classList.add("is-on");
+  document.getElementById("saveLaterLabel").textContent = "Coming";
+  document.getElementById("saveLaterSub").textContent = "soon";
+  clearTimeout(saveLaterTimeout);
+  saveLaterTimeout = setTimeout(resetSaveLater, 1800);
+});
+
+// bottom nav: Progress opens Your Journey, the rest are placeholders
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    const which = tab.dataset.tab;
+    if(which === "progress"){
+      openJourney();
+      return;
+    }
+    if(which === "home") return;
+    tab.classList.add("is-pending");
+    setTimeout(() => tab.classList.remove("is-pending"), 400);
+  });
+});
+
+document.getElementById("seeAllBtn").addEventListener("click", () => openJourney());
+document.getElementById("menuBtn").addEventListener("click", () => openJourney());
 
 document.getElementById("doneBtn").addEventListener("click", () => {
   resetReadingUI();

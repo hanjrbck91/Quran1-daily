@@ -20,40 +20,145 @@
 
 <div class="app">
 
-  <!-- LANDING -->
+  <!-- ============ LANDING ============ -->
   <section id="screenLanding" class="screen landing">
-    <button id="journeyBtn" class="round-btn landing-corner" aria-label="Your Journey">◆</button>
 
-    <div class="landing-center">
-      <p class="mark">﷽</p>
-      <h1 class="app-name">Remember Point</h1>
-      <p class="app-tagline">One Page of Quran.<br>Every Day.</p>
+    <div class="landing-scroll">
+      <header class="top-bar">
+        <button id="journeyBtn" class="round-btn" aria-label="Your Journey">
+          <svg viewBox="0 0 24 24" class="ico"><path d="M12 3.5 20.5 12 12 20.5 3.5 12z"/><path d="M12 8.4 15.6 12 12 15.6 8.4 12z" class="fill"/></svg>
+        </button>
+        <button id="menuBtn" class="round-btn" aria-label="Menu">
+          <svg viewBox="0 0 24 24" class="ico"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </header>
 
-      <button id="beginBtn" class="btn btn-primary btn-hero">Begin Today&rsquo;s Page</button>
+      <div class="brand-block">
+        <p class="mark">﷽</p>
+        <h1 class="app-name">Remember Point</h1>
+        <p class="app-tagline">One Page of Quran. Every Day.</p>
+      </div>
+
+      <!-- invitation card -->
+      <div class="invite-card">
+        <div class="date-chip">
+          <span id="dateDow" class="date-dow">FRI</span>
+          <span id="dateDay" class="date-day">12</span>
+          <span id="dateMon" class="date-mon">SEP 2026</span>
+        </div>
+        <div class="invite-copy">
+          <h2 class="invite-title">A few minutes with the Quran today?</h2>
+          <p class="invite-sub">Small steps.<br>Big reward.</p>
+        </div>
+        <svg viewBox="0 0 24 24" class="leaf"><path d="M20.5 3.5c0 9-5.5 14.5-12 14.5-2 0-3.5-.6-4.5-1.5 0-9 5.5-14 12-14 2 0 3.7.4 4.5 1z"/><path d="M4 20.5C6 14 10 9.5 15.5 7"/></svg>
+      </div>
+
+      <!-- primary action -->
+      <button id="beginBtn" class="begin-btn">
+        <svg viewBox="0 0 24 24" class="ico begin-ico"><path d="M3 5.5h6a3 3 0 0 1 3 3v10a2.5 2.5 0 0 0-2.5-2.5H3zM21 5.5h-6a3 3 0 0 0-3 3v10a2.5 2.5 0 0 1 2.5-2.5H21z"/></svg>
+        <span>Begin Today&rsquo;s Page</span>
+        <svg viewBox="0 0 24 24" class="ico begin-chev"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
       <p class="hero-note">A random page will be shown</p>
 
       <p id="landingError" class="landing-error" hidden>Could not load today&rsquo;s page. Check your connection and try again.</p>
+
+      <!-- journey -->
+      <div class="section-head">
+        <h3 class="section-title">Your Journey</h3>
+        <button id="seeAllBtn" class="see-all">See All
+          <svg viewBox="0 0 24 24" class="ico"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+
+      <div class="tile-row">
+        <div class="tile">
+          <svg viewBox="0 0 24 24" class="ico tile-ico"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>
+          <span id="tileWeekPages" class="tile-num">0</span>
+          <span class="tile-label">Pages<br>this week</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24" class="ico tile-ico"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 1.8"/></svg>
+          <span id="tileWeekMinutes" class="tile-num">0<small>min</small></span>
+          <span class="tile-label">This week</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24" class="ico tile-ico"><rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/></svg>
+          <span id="tileMonthPages" class="tile-num">0</span>
+          <span class="tile-label">This month</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24" class="ico tile-ico"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/></svg>
+          <span id="tileTotalPages" class="tile-num">0</span>
+          <span class="tile-label">Total pages</span>
+        </div>
+      </div>
+
+      <!-- quote -->
+      <div class="quote-card">
+        <span class="quote-mark">&ldquo;</span>
+        <div class="quote-body">
+          <p class="quote-text">And We have certainly made the Quran easy for remembrance, so is there any who will remember?</p>
+          <p class="quote-src">&mdash; Surah Al-Qamar (54:17)</p>
+        </div>
+        <svg viewBox="0 0 24 24" class="quote-ico"><path d="M12 2.5v4M8 10h8v11H8zM10 21v-4h4v4"/><path d="M6.5 21h11"/></svg>
+      </div>
+
       <p id="returningLine" class="returning-line" hidden></p>
     </div>
+
+    <!-- bottom nav (Progress opens Your Journey; the rest are placeholders for now) -->
+    <nav class="tab-bar">
+      <button class="tab is-active" data-tab="home">
+        <svg viewBox="0 0 24 24" class="ico"><path d="M4 10.5 12 4l8 6.5V20H4z"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="tab" data-tab="progress">
+        <svg viewBox="0 0 24 24" class="ico"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>
+        <span>Progress</span>
+      </button>
+      <button class="tab" data-tab="reflections">
+        <svg viewBox="0 0 24 24" class="ico"><path d="M3 5.5h6a3 3 0 0 1 3 3v10a2.5 2.5 0 0 0-2.5-2.5H3zM21 5.5h-6a3 3 0 0 0-3 3v10a2.5 2.5 0 0 1 2.5-2.5H21z"/></svg>
+        <span>Reflections</span>
+      </button>
+      <button class="tab" data-tab="settings">
+        <svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.6v2.2M12 18.2v2.2M4.9 7.8l1.9 1.1M17.2 15.1l1.9 1.1M19.1 7.8l-1.9 1.1M6.8 15.1l-1.9 1.1"/></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
   </section>
 
-  <!-- READING -->
+  <!-- ============ READING ============ -->
   <section id="screenReading" class="screen reading" hidden>
 
     <header class="reading-header">
-      <button id="backBtn" class="round-btn" aria-label="Back">←</button>
+      <button id="backBtn" class="round-btn" aria-label="Back">
+        <svg viewBox="0 0 24 24" class="ico"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
       <div class="reading-titles">
-        <h2 id="pageTitle" class="reading-title">Today&rsquo;s Page</h2>
-        <p id="pageSubtitle" class="reading-subtitle">Focus. Read. Reflect.</p>
+        <h2 class="reading-title">Today&rsquo;s Page</h2>
+        <p class="reading-subtitle">Focus. Read. Reflect.</p>
       </div>
-      <button id="journeyBtnReading" class="round-btn" aria-label="Your Journey">◆</button>
+      <button id="journeyBtnReading" class="round-btn" aria-label="Your Journey">
+        <svg viewBox="0 0 24 24" class="ico"><circle cx="6" cy="12" r="1.4" class="fill"/><circle cx="12" cy="12" r="1.4" class="fill"/><circle cx="18" cy="12" r="1.4" class="fill"/></svg>
+      </button>
     </header>
 
-    <!-- HERO: the Quran page. Scales to fit; never scrolls. -->
+    <div class="page-info">
+      <svg viewBox="0 0 24 24" class="orn"><path d="M12 3.5c2.4 3 4.6 5.4 4.6 8.5S14.4 17.5 12 20.5c-2.4-3-4.6-5.4-4.6-8.5S9.6 6.5 12 3.5z"/><circle cx="12" cy="12" r="1.6"/></svg>
+      <div class="page-info-text">
+        <p id="pageTitle" class="page-info-main">Page &mdash; of 604</p>
+        <p id="pageSubtitle" class="page-info-sub">&nbsp;</p>
+      </div>
+      <svg viewBox="0 0 24 24" class="orn"><path d="M12 3.5c2.4 3 4.6 5.4 4.6 8.5S14.4 17.5 12 20.5c-2.4-3-4.6-5.4-4.6-8.5S9.6 6.5 12 3.5z"/><circle cx="12" cy="12" r="1.6"/></svg>
+    </div>
+
+    <!-- HERO: the mushaf page. Scales to fit; never scrolls. -->
     <div class="quran-page" id="quranPage">
       <div class="page-strip">
-        <span id="surahStrip" class="page-strip-side"></span>
         <span id="juzLabel" class="page-strip-side page-strip-juz"></span>
+        <span id="surahStrip" class="page-strip-mid"></span>
+        <span id="pageStripNum" class="page-strip-side"></span>
       </div>
       <div class="quran-frame" id="quranFrame">
         <div class="quran-text" id="quranText" dir="rtl" lang="ar"></div>
@@ -61,25 +166,50 @@
       <div class="page-folio" id="pageFolio"></div>
     </div>
 
-    <div class="control-bar">
-      <div class="timer-chip">
+    <!-- timer -->
+    <div class="timer-bar">
+      <button id="resetBtn" class="timer-side" aria-label="Reset timer">
+        <svg viewBox="0 0 24 24" class="ico"><rect x="7.5" y="7.5" width="9" height="9" rx="1.6" class="fill"/></svg>
+      </button>
+      <div class="timer-mid">
         <span id="timerDisplay" class="timer-display">00:00</span>
-        <span id="timerLabel" class="timer-label">Ready</span>
+        <span id="timerLabel" class="timer-label">Ready when you are</span>
       </div>
-      <button id="startBtn" class="btn btn-primary btn-control">Start Reading</button>
-      <button id="completeBtn" class="btn btn-complete btn-control" hidden>Page Complete</button>
+      <button id="startBtn" class="timer-action" aria-label="Start reading">
+        <svg viewBox="0 0 24 24" class="ico"><path d="M9 6.5 18 12l-9 5.5z" class="fill"/></svg>
+      </button>
+      <button id="completeBtn" class="timer-action is-complete" aria-label="Page complete" hidden>
+        <svg viewBox="0 0 24 24" class="ico"><path d="m6 12.5 4 4 8-9"/></svg>
+      </button>
     </div>
 
-    <div class="reading-secondary">
-      <label class="chip-btn" for="physicalInput">Capture / Upload</label>
+    <!-- secondary actions -->
+    <div class="action-row">
+      <label class="action-card" for="physicalInput">
+        <svg viewBox="0 0 24 24" class="ico action-ico"><rect x="3" y="7" width="18" height="13" rx="2.5"/><circle cx="12" cy="13.5" r="3.4"/><path d="M8.5 7l1.5-2.5h4L15.5 7"/></svg>
+        <span class="action-label" id="captureLabel">Capture / Upload</span>
+        <span class="action-sub">Physical Quran</span>
+        <span class="sr-only">Capture or upload a photo of your physical Quran</span>
+      </label>
       <input type="file" id="physicalInput" accept="image/*" capture="environment" hidden>
-      <button id="aiPromptBtn" class="chip-btn">Understand This Page</button>
+
+      <button class="action-card" id="aiPromptBtn">
+        <svg viewBox="0 0 24 24" class="ico action-ico"><rect x="5" y="3.5" width="14" height="17" rx="2.2"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"/></svg>
+        <span class="action-label">Understand</span>
+        <span class="action-sub">This Page</span>
+      </button>
+
+      <button class="action-card" id="saveLaterBtn">
+        <svg viewBox="0 0 24 24" class="ico action-ico"><path d="M7 4.5h10v15l-5-3.5-5 3.5z"/></svg>
+        <span class="action-label" id="saveLaterLabel">Save for</span>
+        <span class="action-sub" id="saveLaterSub">Later</span>
+      </button>
     </div>
 
     <p id="readingError" class="reading-error" hidden></p>
   </section>
 
-  <!-- COMPLETION -->
+  <!-- ============ COMPLETION ============ -->
   <section id="screenCompletion" class="screen completion" hidden>
     <div class="completion-center">
       <p class="completion-lead">You gave</p>
@@ -92,7 +222,7 @@
 
 </div>
 
-<!-- JOURNEY (progress) SHEET -->
+<!-- JOURNEY SHEET -->
 <div id="progressOverlay" class="overlay" hidden>
   <div class="sheet">
     <div class="sheet-header">
@@ -126,7 +256,7 @@
   </div>
 </div>
 
-<!-- PHYSICAL QURAN PHOTO SHEET (kept out of the reading layout so the page never shifts) -->
+<!-- PHYSICAL PHOTO SHEET -->
 <div id="physicalOverlay" class="overlay" hidden>
   <div class="sheet">
     <div class="sheet-header">

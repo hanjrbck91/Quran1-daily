@@ -1,501 +1,534 @@
 :root{
-  --bg:#ede7da;
-  --surface:#f5f0e6;
-  --surface-hi:#faf7f0;
-  --paper:#fbf8f1;
+  --bg:#ece5d7;
+  --surface:#f4efe4;
+  --surface-hi:#faf6ee;
+  --paper:#fdfaf3;
   --ink:#2b2621;
-  --ink-soft:#6e6558;
+  --ink-soft:#6b6254;
   --ink-faint:#9a9183;
-  --line:#dcd3c2;
-  --line-soft:#e6ddcc;
+  --line:#ddd3c1;
+  --line-soft:#e7dfcf;
   --gold:#9a7b45;
-  --accent-deep:#3a3128;
-  --complete:#5a6b4e;
+  --dark:#3a322a;
+  --complete:#5c6e4f;
   --danger:#8a4a3d;
 
-  --lift:0 1px 2px rgba(58,49,40,0.05), 0 8px 22px rgba(58,49,40,0.07);
-  --lift-sm:0 1px 2px rgba(58,49,40,0.05), 0 3px 10px rgba(58,49,40,0.05);
-  --inset-hi:inset 0 1px 0 rgba(255,255,255,0.75);
+  --lift:0 1px 2px rgba(58,49,40,0.05), 0 10px 24px rgba(58,49,40,0.08);
+  --lift-sm:0 1px 2px rgba(58,49,40,0.05), 0 4px 12px rgba(58,49,40,0.06);
+  --hi:inset 0 1px 0 rgba(255,255,255,0.8);
 
   --safe-t:env(safe-area-inset-top, 0px);
   --safe-b:env(safe-area-inset-bottom, 0px);
+  --app-h:100dvh;               /* replaced at runtime with the real visible height */
 }
 
 *{box-sizing:border-box;}
-html,body{
-  margin:0;
-  padding:0;
-  height:100%;
-  overflow:hidden;               /* the app owns its own layout; nothing scrolls the page */
-  overscroll-behavior:none;
-}
+/* Any rule that sets `display` outranks the UA's [hidden]{display:none}, which
+   has silently broken hiding three times in this codebase. Settle it globally. */
+[hidden]{display:none !important;}
+html,body{margin:0;padding:0;height:100%;}
 body{
   background:var(--bg);
   color:var(--ink);
   font-family:Georgia,"Times New Roman",serif;
   -webkit-font-smoothing:antialiased;
   -webkit-tap-highlight-color:transparent;
+  overflow:hidden;
+  overscroll-behavior:none;
 }
-button{font-family:inherit;}
+button{font-family:inherit;color:inherit;}
 
+/* iOS Safari resolves height:100% against the layout viewport (toolbars
+   hidden), which pushes the top of the app off-screen. --app-h is set from
+   visualViewport.height so the canvas is always exactly what's visible. */
 .app{
   max-width:460px;
   margin:0 auto;
-  height:100%;
+  height:var(--app-h);
   position:relative;
+  overflow:hidden;
 }
 
-/* ---------- screens ---------- */
 .screen{
   height:100%;
   display:flex;
   flex-direction:column;
-  padding:calc(10px + var(--safe-t)) 18px calc(10px + var(--safe-b));
   animation:fadeIn 0.3s ease;
 }
 .screen[hidden]{display:none;}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 
+/* icons */
+.ico{
+  width:1em;height:1em;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.6;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  display:block;
+}
+.ico .fill{fill:currentColor;stroke:none;}
+
 .round-btn{
-  width:38px;
-  height:38px;
-  flex:0 0 38px;
+  width:38px;height:38px;flex:0 0 38px;
   border-radius:50%;
   border:1px solid var(--line);
   background:var(--surface-hi);
   color:var(--ink-soft);
-  font-size:0.95rem;
+  font-size:18px;
   cursor:pointer;
-  box-shadow:var(--lift-sm), var(--inset-hi);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  box-shadow:var(--lift-sm), var(--hi);
+  display:flex;align-items:center;justify-content:center;
 }
 .round-btn:active{background:var(--surface);}
 
-/* ---------- LANDING ---------- */
-.landing{justify-content:center;overflow-y:auto;}
-.landing-corner{position:absolute;top:calc(14px + var(--safe-t));left:18px;}
-.landing-center{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
+/* ================= LANDING ================= */
+.landing{overflow:hidden;}
+.landing-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:calc(10px + var(--safe-t)) 18px 14px;
 }
-.mark{font-size:1.15rem;color:var(--gold);margin:0 0 12px;opacity:0.75;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;}
+
+.brand-block{text-align:center;margin:14px 0 18px;}
+.mark{font-size:1.2rem;color:var(--gold);margin:0 0 10px;opacity:0.8;}
 .app-name{
-  font-size:2.05rem;
-  font-weight:700;
-  color:var(--accent-deep);
-  margin:0 0 12px;
-  letter-spacing:0.005em;
+  font-size:2rem;font-weight:700;color:var(--dark);
+  margin:0 0 8px;letter-spacing:0.005em;
 }
-.app-tagline{
-  font-size:1.02rem;
-  font-style:italic;
-  color:var(--ink-soft);
-  line-height:1.65;
-  margin:0 0 38px;
+.app-tagline{font-size:0.95rem;font-style:italic;color:var(--ink-soft);margin:0;}
+
+/* invitation card */
+.invite-card{
+  display:flex;align-items:center;gap:14px;
+  background:var(--surface-hi);
+  border:1px solid var(--line-soft);
+  border-radius:22px;
+  padding:16px;
+  box-shadow:var(--lift), var(--hi);
+  position:relative;
+  margin-bottom:18px;
 }
-.hero-note{
-  font-size:0.74rem;
-  color:var(--ink-faint);
-  margin:12px 0 0;
-  letter-spacing:0.02em;
+.date-chip{
+  flex:0 0 auto;
+  width:86px;
+  background:var(--surface);
+  border:1px solid var(--line-soft);
+  border-radius:16px;
+  padding:12px 6px;
+  text-align:center;
+  box-shadow:var(--hi);
 }
-.returning-line{
-  font-size:0.85rem;
-  color:var(--ink-faint);
-  margin:30px 0 0;
-  font-style:italic;
-}
-.landing-error{
-  font-size:0.82rem;
-  color:var(--danger);
-  margin:16px 0 0;
-  max-width:280px;
+.date-dow{display:block;font-size:0.66rem;letter-spacing:0.14em;color:var(--ink-faint);}
+.date-day{display:block;font-size:2.1rem;font-weight:700;line-height:1.05;color:var(--dark);}
+.date-mon{display:block;font-size:0.64rem;letter-spacing:0.1em;color:var(--ink-faint);}
+.invite-copy{flex:1 1 auto;min-width:0;}
+.invite-title{font-size:1.02rem;font-weight:700;color:var(--dark);margin:0 0 8px;line-height:1.3;}
+.invite-sub{font-size:0.82rem;color:var(--ink-soft);margin:0;line-height:1.5;}
+.leaf{
+  position:absolute;right:16px;bottom:14px;
+  width:22px;height:22px;color:var(--gold);opacity:0.6;
+  fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;
 }
 
-/* ---------- buttons ---------- */
-.btn{
-  font-size:1rem;
-  border-radius:999px;
-  border:none;
-  cursor:pointer;
-  padding:14px 26px;
-}
-.btn-hero{
+/* primary action */
+.begin-btn{
   width:100%;
-  max-width:320px;
-  padding:17px 20px;
+  display:flex;align-items:center;gap:12px;
+  background:var(--dark);
+  color:var(--surface-hi);
+  border:none;
+  border-radius:999px;
+  padding:17px 22px;
   font-size:1.05rem;
+  cursor:pointer;
   box-shadow:var(--lift);
 }
-.btn-primary{background:var(--accent-deep);color:var(--surface-hi);}
-.btn-primary:active{opacity:0.88;}
-.btn-primary:disabled{opacity:0.5;cursor:default;}
-.btn-complete{background:var(--complete);color:var(--surface-hi);}
-.btn-complete:active{opacity:0.88;}
-.btn-complete:disabled{opacity:0.5;cursor:default;}
+.begin-btn:active{opacity:0.9;}
+.begin-btn:disabled{opacity:0.55;}
+.begin-btn span{flex:1 1 auto;text-align:center;}
+.begin-ico{font-size:21px;flex:0 0 auto;}
+.begin-chev{font-size:19px;flex:0 0 auto;opacity:0.85;}
+.hero-note{
+  text-align:center;font-size:0.74rem;color:var(--ink-faint);
+  margin:10px 0 20px;letter-spacing:0.02em;
+}
+.landing-error{text-align:center;font-size:0.8rem;color:var(--danger);margin:0 0 16px;}
 
-.btn-link{
-  display:block;
-  margin:10px auto 0;
-  background:none;
-  border:none;
-  color:var(--ink-faint);
-  text-decoration:underline;
-  cursor:pointer;
-  font-family:inherit;
-  font-size:0.82rem;
+/* journey */
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;}
+.section-title{font-size:1.05rem;font-weight:700;color:var(--dark);margin:0;}
+.see-all{
+  display:flex;align-items:center;gap:5px;
+  background:none;border:none;cursor:pointer;
+  font-size:0.8rem;color:var(--ink-soft);padding:4px 2px;
+}
+.see-all .ico{font-size:14px;}
+
+.tile-row{display:flex;gap:8px;margin-bottom:18px;}
+.tile{
+  flex:1 1 0;min-width:0;
+  background:var(--surface-hi);
+  border:1px solid var(--line-soft);
+  border-radius:16px;
+  padding:12px 6px 10px;
+  text-align:center;
+  box-shadow:var(--lift-sm), var(--hi);
+}
+.tile-ico{font-size:17px;color:var(--ink-faint);margin:0 auto 7px;}
+.tile-num{display:block;font-size:1.25rem;font-weight:700;color:var(--dark);line-height:1.1;}
+.tile-num small{font-size:0.62rem;font-weight:400;margin-left:1px;}
+.tile-label{display:block;font-size:0.62rem;color:var(--ink-faint);margin-top:4px;line-height:1.35;}
+
+/* quote */
+.quote-card{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--surface);
+  border:1px solid var(--line-soft);
+  border-radius:18px;
+  padding:14px 16px;
+  box-shadow:var(--hi);
+  position:relative;
+}
+.quote-mark{font-size:1.7rem;color:var(--ink-faint);line-height:1;flex:0 0 auto;}
+.quote-body{flex:1 1 auto;min-width:0;}
+.quote-text{font-size:0.82rem;font-style:italic;color:var(--ink-soft);margin:0 0 7px;line-height:1.55;}
+.quote-src{font-size:0.72rem;color:var(--ink-faint);margin:0;}
+.quote-ico{
+  flex:0 0 auto;width:26px;height:26px;color:var(--gold);opacity:0.45;
+  fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;
+  align-self:flex-end;
 }
 
-/* ---------- READING ---------- */
-.reading{
-  padding-left:14px;
-  padding-right:14px;
-  gap:8px;
-  overflow:hidden;               /* nothing in the reading canvas scrolls */
+.returning-line{
+  text-align:center;font-size:0.8rem;color:var(--ink-faint);
+  margin:16px 0 0;font-style:italic;
 }
 
-.reading-header{
-  display:flex;
-  align-items:center;
-  gap:10px;
+/* bottom nav */
+.tab-bar{
   flex:0 0 auto;
+  display:flex;
+  background:var(--surface-hi);
+  border-top:1px solid var(--line-soft);
+  padding:8px 6px calc(6px + var(--safe-b));
+  box-shadow:0 -4px 18px rgba(58,49,40,0.05);
 }
-.reading-titles{flex:1;min-width:0;text-align:center;}
-.reading-title{
-  font-size:0.95rem;
-  font-weight:700;
-  color:var(--accent-deep);
-  margin:0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.reading-subtitle{
-  font-size:0.72rem;
+.tab{
+  flex:1 1 0;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:none;border:none;cursor:pointer;
+  padding:6px 2px;
   color:var(--ink-faint);
-  margin:2px 0 0;
-  white-space:nowrap;
+  font-size:0.64rem;
+}
+.tab .ico{font-size:19px;}
+.tab.is-active{color:var(--dark);}
+.tab.is-active .ico{color:var(--dark);}
+
+/* ================= READING ================= */
+.reading{
+  padding:calc(8px + var(--safe-t)) 14px calc(8px + var(--safe-b));
+  gap:8px;
   overflow:hidden;
-  text-overflow:ellipsis;
+}
+.reading-header{display:flex;align-items:center;gap:10px;flex:0 0 auto;}
+.reading-titles{flex:1 1 auto;min-width:0;text-align:center;}
+.reading-title{font-size:1.02rem;font-weight:700;color:var(--dark);margin:0;}
+.reading-subtitle{font-size:0.72rem;color:var(--ink-faint);margin:2px 0 0;}
+
+.page-info{
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface-hi);
+  border:1px solid var(--line-soft);
+  border-radius:16px;
+  padding:9px 14px;
+  box-shadow:var(--lift-sm), var(--hi);
+}
+.page-info-text{flex:1 1 auto;min-width:0;text-align:center;}
+.page-info-main{
+  font-size:0.9rem;font-weight:700;color:var(--dark);margin:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.page-info-sub{
+  font-size:0.74rem;color:var(--ink-soft);margin:1px 0 0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.orn{
+  flex:0 0 auto;width:16px;height:16px;color:var(--gold);opacity:0.55;
+  fill:none;stroke:currentColor;stroke-width:1.3;stroke-linejoin:round;
 }
 
-/* the hero: a manuscript page that fills whatever height is left */
+/* the mushaf page */
 .quran-page{
   flex:1 1 auto;
-  min-height:0;                  /* critical: lets the flex child actually shrink */
-  display:flex;
-  flex-direction:column;
+  min-height:0;
+  display:flex;flex-direction:column;
   background:var(--paper);
   border:1px solid var(--line);
-  border-radius:16px;
-  box-shadow:var(--lift), var(--inset-hi);
-  padding:8px 8px 4px;
-  position:relative;
+  border-radius:14px;
+  box-shadow:var(--lift), var(--hi);
+  padding:7px;
   overflow:hidden;
 }
 .page-strip{
   flex:0 0 auto;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  padding:2px 8px 6px;
-  border-bottom:1px solid var(--line-soft);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:3px 8px 6px;
   font-family:"Scheherazade New","Amiri","Noto Naskh Arabic",serif;
-  font-size:0.82rem;
+  font-size:0.8rem;
   color:var(--gold);
   direction:rtl;
 }
-.page-strip-side{
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  max-width:65%;
+.page-strip-mid{
+  flex:1 1 auto;min-width:0;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.page-strip-juz{flex:0 0 auto;opacity:0.8;}
+.page-strip-side{flex:0 0 auto;opacity:0.85;font-size:0.74rem;}
 
-/* inner frame: fixed box the text is measured against and fitted into */
+/* double manuscript border */
 .quran-frame{
   flex:1 1 auto;
   min-height:0;
   overflow:hidden;
-  padding:10px 6px;
-  display:flex;
-  align-items:center;
-  border:1px solid var(--line-soft);
-  border-radius:10px;
-  margin:6px 2px 4px;
+  padding:12px 10px;
+  display:flex;align-items:center;
+  border:1.5px solid var(--gold);
+  border-radius:8px;
+  margin:0 1px;
+  position:relative;
   background:linear-gradient(180deg,#fffdf8 0%,var(--paper) 100%);
+}
+.quran-frame::before{
+  content:"";
+  position:absolute;
+  inset:3px;
+  border:0.5px solid var(--gold);
+  border-radius:5px;
+  opacity:0.45;
+  pointer-events:none;
 }
 .quran-text{
   width:100%;
   font-family:"Scheherazade New","Amiri","Noto Naskh Arabic","Traditional Arabic",serif;
-  font-size:22px;               /* replaced at runtime by the fit algorithm */
-  line-height:1.78;             /* tight enough to buy font size, loose enough for tashkeel */
+  font-size:22px;              /* replaced at runtime by the fit algorithm */
+  line-height:1.78;
   text-align:center;
   color:var(--ink);
   transform-origin:top center;
 }
-.quran-text .ayah-num{
-  display:inline-block;
-  font-size:0.72em;
-  color:var(--gold);
-  margin:0 2px;
-}
+.quran-text .ayah-num{display:inline-block;font-size:0.72em;color:var(--gold);margin:0 2px;}
 .page-folio{
-  flex:0 0 auto;
-  text-align:center;
+  flex:0 0 auto;text-align:center;
   font-family:"Scheherazade New","Amiri",serif;
-  font-size:0.8rem;
-  color:var(--gold);
-  padding:2px 0 2px;
-  letter-spacing:0.05em;
+  font-size:0.78rem;color:var(--gold);
+  padding:5px 0 1px;letter-spacing:0.05em;
 }
 
-/* timer + primary action on one row, to give the page maximum height */
-.control-bar{
+/* timer */
+.timer-bar{
   flex:0 0 auto;
-  display:flex;
-  align-items:stretch;
-  gap:10px;
-}
-.timer-chip{
-  flex:0 0 auto;
-  min-width:98px;
+  display:flex;align-items:center;gap:12px;
   background:var(--surface-hi);
-  border:1px solid var(--line);
-  border-radius:16px;
-  box-shadow:var(--lift-sm), var(--inset-hi);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:8px 12px;
-}
-.timer-display{
-  font-size:1.3rem;
-  font-weight:700;
-  color:var(--accent-deep);
-  font-variant-numeric:tabular-nums;
-  letter-spacing:0.02em;
-  line-height:1.15;
-}
-.timer-label{
-  font-size:0.62rem;
-  color:var(--ink-faint);
-  letter-spacing:0.04em;
-  text-transform:uppercase;
-  margin-top:2px;
-}
-.timer-chip.running .timer-display{color:var(--complete);}
-.btn-control{
-  flex:1 1 auto;
-  border-radius:16px;
-  padding:14px 12px;
-  font-size:1rem;
-  box-shadow:var(--lift-sm);
-  min-height:56px;
-}
-
-.reading-secondary{
-  flex:0 0 auto;
-  display:flex;
-  gap:8px;
-}
-.chip-btn{
-  flex:1 1 0;
-  text-align:center;
-  background:var(--surface);
   border:1px solid var(--line-soft);
-  border-radius:13px;
-  color:var(--ink-soft);
-  font-size:0.76rem;
-  padding:11px 6px;
-  cursor:pointer;
-  box-shadow:var(--inset-hi);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  border-radius:20px;
+  padding:10px 12px;
+  box-shadow:var(--lift-sm), var(--hi);
 }
-.chip-btn:active{background:var(--surface-hi);}
+.timer-side{
+  width:42px;height:42px;flex:0 0 42px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-faint);
+  font-size:19px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--hi);
+}
+.timer-side:disabled{opacity:0.4;}
+.timer-mid{flex:1 1 auto;min-width:0;text-align:center;}
+.timer-display{
+  display:block;
+  font-size:1.6rem;font-weight:700;color:var(--dark);
+  font-variant-numeric:tabular-nums;letter-spacing:0.02em;line-height:1.1;
+}
+.timer-label{display:block;font-size:0.66rem;color:var(--ink-faint);margin-top:2px;}
+.timer-bar.running .timer-display{color:var(--complete);}
+.timer-action{
+  width:50px;height:50px;flex:0 0 50px;
+  border-radius:50%;
+  border:none;
+  background:var(--dark);
+  color:var(--surface-hi);
+  font-size:24px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--lift-sm);
+}
+.timer-action:active{opacity:0.88;}
+.timer-action:disabled{opacity:0.5;}
+.timer-action.is-complete{background:var(--complete);}
+.timer-action .ico{stroke-width:2.2;}
+
+/* secondary actions */
+.action-row{flex:0 0 auto;display:flex;gap:8px;}
+.action-card{
+  flex:1 1 0;min-width:0;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:var(--surface-hi);
+  border:1px solid var(--line-soft);
+  border-radius:16px;
+  padding:10px 5px;
+  cursor:pointer;
+  box-shadow:var(--lift-sm), var(--hi);
+  color:var(--ink-soft);
+  text-align:center;
+}
+.action-card:active{background:var(--surface);}
+.action-ico{font-size:19px;color:var(--ink-faint);margin-bottom:2px;}
+.action-label{
+  font-size:0.72rem;color:var(--dark);line-height:1.2;
+  max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.action-sub{
+  font-size:0.62rem;color:var(--ink-faint);line-height:1.2;
+  max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.action-card.is-on .action-ico{color:var(--complete);}
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
 
 .reading-error{
-  flex:0 0 auto;
-  font-size:0.78rem;
-  color:var(--danger);
-  margin:0;
-  text-align:center;
+  flex:0 0 auto;font-size:0.76rem;color:var(--danger);
+  margin:0;text-align:center;
 }
 
-/* ---------- COMPLETION ---------- */
-.completion{justify-content:center;}
-.completion-center{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  text-align:center;
-}
+/* ================= COMPLETION ================= */
+.completion{justify-content:center;padding:24px;}
+.completion-center{display:flex;flex-direction:column;align-items:center;text-align:center;}
 .completion-lead{font-size:1.05rem;color:var(--ink-soft);margin:0;}
-.completion-duration{
-  font-size:2.4rem;
-  font-weight:700;
-  color:var(--accent-deep);
-  margin:6px 0 2px;
-}
-.completion-note{
-  font-size:0.9rem;
-  font-style:italic;
-  color:var(--ink-faint);
-  margin:8px 0 40px;
+.completion-duration{font-size:2.4rem;font-weight:700;color:var(--dark);margin:6px 0 2px;}
+.completion-note{font-size:0.9rem;font-style:italic;color:var(--ink-faint);margin:8px 0 40px;}
+
+.btn{font-size:1rem;border-radius:999px;border:none;cursor:pointer;padding:14px 26px;}
+.btn-hero{width:100%;max-width:320px;padding:17px 20px;font-size:1.05rem;box-shadow:var(--lift);}
+.btn-primary{background:var(--dark);color:var(--surface-hi);}
+.btn-primary:active{opacity:0.88;}
+.btn-link{
+  display:block;margin:10px auto 0;background:none;border:none;
+  color:var(--ink-faint);text-decoration:underline;cursor:pointer;
+  font-family:inherit;font-size:0.82rem;
 }
 
-/* ---------- sheets ---------- */
+/* ================= SHEETS ================= */
 .overlay{
-  position:fixed;
-  inset:0;
+  position:fixed;inset:0;
   background:rgba(38,32,22,0.42);
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
+  display:flex;align-items:flex-end;justify-content:center;
   z-index:50;
 }
 .overlay[hidden]{display:none;}
 .sheet{
   background:var(--bg);
-  width:100%;
-  max-width:460px;
+  width:100%;max-width:460px;
   border-radius:22px 22px 0 0;
   padding:20px 20px calc(26px + var(--safe-b));
-  max-height:86vh;
   max-height:86dvh;
   overflow-y:auto;
   box-shadow:0 -8px 30px rgba(58,49,40,0.18);
 }
-.sheet-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:14px;
-}
-.sheet-header h2{
-  font-size:1.05rem;
-  font-weight:700;
-  margin:0;
-  color:var(--accent-deep);
-}
+.sheet-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.sheet-header h2{font-size:1.05rem;font-weight:700;margin:0;color:var(--dark);}
 .icon-btn{
   background:none;border:none;font-size:1.05rem;cursor:pointer;
   padding:6px;border-radius:8px;color:var(--ink-faint);
 }
-.icon-btn:active{color:var(--accent-deep);}
-
-.stats-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:18px;
-}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
 .stat{
-  background:var(--surface-hi);
-  border:1px solid var(--line-soft);
-  border-radius:14px;
-  padding:14px 10px;
-  text-align:center;
-  box-shadow:var(--inset-hi);
+  background:var(--surface-hi);border:1px solid var(--line-soft);
+  border-radius:14px;padding:14px 10px;text-align:center;box-shadow:var(--hi);
 }
-.stat-num{
-  display:block;
-  font-size:1.5rem;
-  font-weight:700;
-  color:var(--accent-deep);
-}
-.stat-label{
-  font-size:0.67rem;
-  color:var(--ink-faint);
-  text-transform:uppercase;
-  letter-spacing:0.03em;
-}
-.philosophy-note{
-  text-align:center;
-  font-style:italic;
-  color:var(--ink-faint);
-  font-size:0.82rem;
-  margin-bottom:18px;
-}
-.history-calendar{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:4px;
-}
+.stat-num{display:block;font-size:1.5rem;font-weight:700;color:var(--dark);}
+.stat-label{font-size:0.67rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.03em;}
+.philosophy-note{text-align:center;font-style:italic;color:var(--ink-faint);font-size:0.82rem;margin-bottom:18px;}
+.history-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .history-day{aspect-ratio:1;border-radius:5px;background:var(--line);}
 .history-day.active{background:var(--gold);}
 
-.hint{
-  font-size:0.82rem;
-  color:var(--ink-soft);
-  margin:0 0 12px;
-  line-height:1.5;
-}
+.hint{font-size:0.82rem;color:var(--ink-soft);margin:0 0 12px;line-height:1.5;}
 .ai-prompt-text{
-  width:100%;
-  min-height:170px;
+  width:100%;min-height:170px;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:0.78rem;
-  padding:12px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:var(--surface-hi);
-  color:var(--ink);
-  margin-bottom:12px;
+  font-size:0.78rem;padding:12px;
+  border:1px solid var(--line);border-radius:12px;
+  background:var(--surface-hi);color:var(--ink);margin-bottom:12px;
 }
 .copy-confirm{margin-left:10px;color:var(--complete);font-size:0.85rem;}
-
 .physical-preview{
-  display:block;
-  max-width:100%;
-  max-height:46vh;
-  margin:0 auto;
-  border-radius:14px;
-  border:1px solid var(--line);
+  display:block;max-width:100%;max-height:46vh;margin:0 auto;
+  border-radius:14px;border:1px solid var(--line);
 }
 
-/* ---------- short viewports (Safari with its chrome showing) ----------
-   Give the Quran page back every pixel the interface can spare, so dense
-   pages don't have to shrink the Arabic to stay on one screen. */
-@media (max-height:740px){
+/* ====== short viewports: give the mushaf page back its pixels ====== */
+@media (max-height:750px){
   .reading{gap:6px;padding-left:12px;padding-right:12px;}
-  .round-btn{width:34px;height:34px;flex-basis:34px;font-size:0.9rem;}
-  .reading-title{font-size:0.88rem;}
-  .reading-subtitle{font-size:0.68rem;}
-  .quran-page{padding:6px 6px 3px;border-radius:14px;}
-  .quran-frame{padding:8px 4px;margin:4px 1px 3px;}
-  .btn-control{min-height:50px;padding:12px 10px;font-size:0.95rem;}
-  .timer-chip{min-width:90px;padding:6px 10px;}
-  .timer-display{font-size:1.2rem;}
-  .chip-btn{padding:9px 6px;font-size:0.73rem;}
+  .round-btn{width:34px;height:34px;flex-basis:34px;font-size:16px;}
+  .reading-title{font-size:0.92rem;}
+  .reading-subtitle{display:none;}
+  .page-info{padding:7px 12px;border-radius:14px;}
+  .page-info-main{font-size:0.84rem;}
+  .page-info-sub{font-size:0.7rem;}
+  .quran-page{padding:6px;}
+  .quran-frame{padding:9px 7px;}
+  .timer-bar{padding:8px 10px;gap:10px;border-radius:18px;}
+  .timer-display{font-size:1.4rem;}
+  .timer-side{width:38px;height:38px;flex-basis:38px;border-radius:12px;}
+  .timer-action{width:46px;height:46px;flex-basis:46px;}
+  .action-card{padding:8px 4px;border-radius:14px;}
+  .action-ico{font-size:17px;margin-bottom:0;}
+  .action-label{font-size:0.68rem;}
+  .action-sub{font-size:0.6rem;}
 }
-/* Very short (older/smaller phones, or Safari with all bars): the header
-   already states page + surah, so the in-page strip and folio can go. */
-@media (max-height:680px){
+@media (max-height:750px){
+  .page-strip{padding:1px 6px 4px;font-size:0.74rem;}
+  .page-folio{padding:3px 0 0;font-size:0.72rem;}
+  .quran-frame{padding:8px 6px;}
+}
+/* Below this the in-page strip is a luxury: the page-info card above already
+   names the surah, and those pixels are worth more as Arabic. */
+@media (max-height:700px){
   .page-strip{display:none;}
-  .page-folio{display:none;}
-  .quran-frame{margin:0 1px;border:none;}
+  .page-folio{display:none;}        /* the page number is in the card above */
+  .action-card{padding:7px 4px;gap:0;}
+  .action-ico{font-size:16px;margin-bottom:1px;}
+  .action-label{font-size:0.66rem;}
+  .action-sub{font-size:0.58rem;}
+  .reading{gap:5px;}
+  .page-info{padding:6px 12px;}
+  .quran-page{padding:5px;}
+  .quran-frame{padding:7px 6px;}
+  .timer-bar{padding:7px 10px;}
+  .timer-action{width:44px;height:44px;flex-basis:44px;font-size:22px;}
+  .timer-side{width:36px;height:36px;flex-basis:36px;}
+  .timer-display{font-size:1.32rem;}
 }
 
-/* ---------- wider screens: present the phone canvas as an object ---------- */
-@media (min-width:481px) and (min-height:560px){
+/* ====== wider screens: the phone canvas as an object ====== */
+@media (min-width:481px) and (min-height:600px){
   body{display:flex;align-items:center;justify-content:center;}
   .app{
-    height:min(880px, 100%);
+    height:min(880px, var(--app-h));
     border-radius:30px;
     background:var(--bg);
     box-shadow:0 18px 60px rgba(58,49,40,0.18);
     border:1px solid var(--line);
-    overflow:hidden;
   }
 }
